@@ -212,6 +212,7 @@ void discharge(byte port1, byte port2) {
   digitalWrite(PORT[port2][BIG], LOW);
   digitalWrite(PORT[port2][READ], LOW);
   resetOther(port1, port2);
+}
 void dischargeModeBigR(byte port1, byte port2){ // 让电容放电(在大电阻上)
   pinMode(PORT[port1][SMALL], INPUT);
   pinMode(PORT[port1][BIG], OUTPUT);
