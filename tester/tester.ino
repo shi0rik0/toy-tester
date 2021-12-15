@@ -198,6 +198,20 @@ void switchToBigResistor(byte port1, byte port2) {
   digitalWrite(PORT[port2][READ], HIGH);
 }
 
+void discharge(byte port1, byte port2) {
+  pinMode(PORT[port1][SMALL], INPUT);
+  pinMode(PORT[port1][BIG], INPUT);
+  pinMode(PORT[port1][READ], OUTPUT);
+  pinMode(PORT[port2][SMALL], INPUT);
+  pinMode(PORT[port2][BIG], INPUT);
+  pinMode(PORT[port2][READ], OUTPUT);
+  digitalWrite(PORT[port1][SMALL], LOW);
+  digitalWrite(PORT[port1][BIG], LOW);
+  digitalWrite(PORT[port1][READ], LOW);
+  digitalWrite(PORT[port2][SMALL], LOW);
+  digitalWrite(PORT[port2][BIG], LOW);
+  digitalWrite(PORT[port2][READ], LOW);
+  resetOther(port1, port2);
 void dischargeModeBigR(byte port1, byte port2){ // 让电容放电(在大电阻上)
   pinMode(PORT[port1][SMALL], INPUT);
   pinMode(PORT[port1][BIG], OUTPUT);
@@ -236,6 +250,26 @@ float getResistance(byte port1, byte port2, float r0) {
   return r;
 }
 
+bool testConnectivity(byte port1, byte port2) {
+  const float THRESHOLD_LOW = 0.03;
+  const float THRESHOLD_HIGH = 4.97;
+//  discharge(port1, port2);
+//  delay(5);
+  switchToBigResistor(port2, port1);
+//  delay(10);
+  float v = getVoltage(port2);
+  Serial.println(v);
+  if (v > THRESHOLD_LOW && v < THRESHOLD_HIGH) {
+    return true;
+  }
+  switchToSmallResistor(port2, port1);
+//  delay(10);
+  v = getVoltage(port2);
+  Serial.println(v);
+  if (v > THRESHOLD_LOW && v < THRESHOLD_HIGH) {
+    return true;
+  }
+  return false;
 
 bool recordVoltages(float *vArr, byte port1, int cnt, int interval){  // true: 电压下降值客观; false: 电压基本不变
   float THRESH = 0.5;
