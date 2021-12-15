@@ -1,5 +1,5 @@
 #include <PCD8544.h>
-
+#include <math.h>
 PCD8544 lcd;
 
 // 以下是引脚定义，SMALL表示小电阻，BIG表示大电阻，READ表示模拟输入
@@ -148,7 +148,7 @@ void switchToBigResistor(byte port1, byte port2) {
   digitalWrite(PORT[port2][READ], HIGH);
 }
 
-void dischargeMode(byte port1, byte port2){ // 让电容放电
+void dischargeModeBigR(byte port1, byte port2){ // 让电容放电(在大电阻上)
   pinMode(PORT[port1][SMALL], INPUT);
   pinMode(PORT[port1][BIG], OUTPUT);
   digitalWrite(PORT[port1][BIG], LOW);
@@ -159,8 +159,24 @@ void dischargeMode(byte port1, byte port2){ // 让电容放电
   digitalWrite(PORT[port2][READ], LOW);
 }
 
-void dischargeCapacitor(byte port1, byte port2, int dischargeTime){
-  dischargeMode(port1, port2);
+void dischargeModeSmallR(byte port1, byte port2){ // 让电容放电(在小电阻上)
+  pinMode(PORT[port1][SMALL], OUTPUT);
+  pinMode(PORT[port1][BIG], INPUT);
+  digitalWrite(PORT[port1][SMALL], LOW);
+  pinMode(PORT[port1][READ], INPUT);
+  pinMode(PORT[port2][SMALL], INPUT);
+  pinMode(PORT[port2][BIG], INPUT);
+  pinMode(PORT[port2][READ], OUTPUT);
+  digitalWrite(PORT[port2][READ], LOW);
+}
+
+void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime){
+  dischargeModeSmallR(port1, port2);
+  delay(dischargeTime);
+}
+
+void dischargeCapacitorBigR(byte port1, byte port2, int dischargeTime){
+  dischargeModeBigR(port1, port2);
   delay(dischargeTime);
 }
 
@@ -171,47 +187,43 @@ float getResistance(byte port1, byte port2, float r0) {
 }
 
 
-void recordVoltages(float *vArr, byte port1, int cnt, int interval){
+bool recordVoltages(float *vArr, byte port1, int cnt, int interval){  // true: 电压下降值客观; false: 电压基本不变
+  float THRESH = 0.5;
   for (int i = 0; i < cnt; ++i){
     vArr[i] = getVoltage(port1);
     delayMicroseconds(interval);
   }
+  return (vArr[cnt - 1] - vArr[0] > THRESH);
 }
 
-float getTao(float *vArr, int pointCnt, int testCnt, int interval){
+float getTao(float *vArr, int pointCnt, int interval){
   const int THRESH = 0.1; // 电压为0的阈值
-  float lastSumVoltage = 0; // 最后几个数据点的和
-  for(int i = pointCnt - testCnt; i < pointCnt; ++i){
-    lastSumVoltage += vArr[i];
-  }
   float tao = -1;
-  float oneTaoVolt = 0.3679 * VCC;  // 经过1tao时间，电压应该衰减为0.3679倍
-  if (lastSumVoltage < THRESH * testCnt){ // 曲线最后达到水平，电容充满了
-    float minDiff = VCC, diff = VCC;
-    int minDiffIndex = 0;
-    for (int i = 0; i < cnt; ++i){   // 找到最接近0.3679*VCC的点
-      diff = __abs(vArr[i] - oneTaoVolt);
-      if(diff < minDiff){
-        minDiff = oneTaoVolt;
-        minDiffIndex = i;
-      }
+  float sumTao = 0;
+  int validCnt = 0;
+  const float validThresh = 0.01; 
+  // V = Vcc * e ** (-t / tao)
+  for(int i = 1; i < pointCnt; ++i){ // 计算tao平均值
+    float t = i * interval * 1e-6;
+    float logDiff = log(VCC) - log(vArr[i]);
+    if (__abs(logDiff) > validThresh){ // 如果电压接近0 就不计入
+      sumTao += (t / logDiff);
+      ++validCnt;;
     }
-    tao = (float)minDiffIndex * interval * 1e-6 // 单位是s
-  }
-  else{ // 曲线没到水平的情况，待完成
-    tao = -1;
   }
 
-  return tao;
+  return sumTao / (float)(validCnt);
 }
 
 float getCapacitance(byte port1, byte port2, float r0){
   float vArr[ARRAY_LEN];
-  int pointCnt = 20; // 取点数目
-  int testCnt = 5;   // 检验曲线是否水平的取点数目
+  int pointCnt = 50; // 取点数目
   int interval = 500; // 测量间隔(us)
-  recordVoltages(vArr, port1, pointCnt, interval);
-  flaot tao = getTao(vArr, pointCnt, testCnt, interval);
+
+  if(!recordVoltages(vArr, port1, pointCnt, interval)){
+    return -1;
+  }
+  flaot tao = getTao(vArr, pointCnt, interval);
   return tao / r0;    // tao = RC
 }
 
@@ -240,11 +252,18 @@ void testResistor(byte port1, byte port2) {
 void testCapacitor(byte port1, byte port2){
   lcd.clear();
   printType("Capacitor");
-  printStatus("Wait...");
-  
+  printStatus("Trying Small F:");
+  float cap;
   switchToBigResistor(port1, port2); // 开始充电
-  float cap = getCapacitance(port1, port2, R_BIG);
-  dischargeCapacitor(port1, port2); //  电容放电
+  cap = getCapacitance(port1, port2, R_BIG);
+  dischargeCapacitorBigR(port1, port2); //  电容放电
+
+  if(cap < 0){
+    printStatus("Failed, Trying big F"); 
+    switchToSmallResistor(port1, port2); // 开始充电
+    cap = getCapacitance(port1, port2, R_SMALL);
+    dischargeCapacitorSmallR(port1, port2); //  电容放电
+  }
 
   printValue(cap, "F");
   printStatus("        Done!");
