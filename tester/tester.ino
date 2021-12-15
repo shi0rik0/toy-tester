@@ -250,19 +250,20 @@ void testResistor(byte port1, byte port2) {
 }
 
 void testCapacitor(byte port1, byte port2){
+  const int dischargeTime = 3000;
   lcd.clear();
   printType("Capacitor");
   printStatus("Trying Small F:");
   float cap;
   switchToBigResistor(port1, port2); // 开始充电
   cap = getCapacitance(port1, port2, R_BIG);
-  dischargeCapacitorBigR(port1, port2); //  电容放电
+  dischargeCapacitorBigR(port1, port2, dischargeTime); //  电容放电
 
   if(cap < 0){
     printStatus("Failed, Trying big F"); 
     switchToSmallResistor(port1, port2); // 开始充电
     cap = getCapacitance(port1, port2, R_SMALL);
-    dischargeCapacitorSmallR(port1, port2); //  电容放电
+    dischargeCapacitorSmallR(port1, port2, dischargeTime); //  电容放电
   }
 
   printValue(cap, "F");
