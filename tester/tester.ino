@@ -274,9 +274,32 @@ void dischargeModeBigR(byte port1, byte port2) { // 让电容放电(在大电阻
   setPort(port2, READ, LOW);
 }
 
-void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime) {
+
+
+void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime){
   dischargeModeSmallR(port1, port2);
   delay(dischargeTime);
+}
+
+void initBJT(byte B, byte C, byte E, bool bBigR){ //bBigR=0 B port uses 680 ohm, else 470k ohm.
+  if(!bBigR){
+    pinMode(PORT[B][SMALL], OUTPUT);
+    pinMode(PORT[B][BIG], INPUT);
+    digitalWrite(PORT[B][SMALL], HIGH);
+  }else{
+    pinMode(PORT[B][SMALL], INPUT);
+    pinMode(PORT[B][BIG], OUTPUT);
+    digitalWrite(PORT[B][HIGH], HIGH);
+  }
+  pinMode(PORT[B][READ], INPUT);
+  pinMode(PORT[C][READ], OUTPUT);
+  pinMode(PORT[C][SMALL], INPUT);
+  pinMode(PORT[C][BIG], INPUT);
+  pinMode(PORT[E][READ], INPUT);
+  pinMode(PORT[E][SMALL], OUTPUT);
+  pinMode(PORT[E][BIG], INPUT);
+  digitalWrite(PORT[E][SMALL], HIGH);
+  digitalWrite(PORT[E][SMALL], LOW);
 }
 
 void dischargeCapacitorBigR(byte port1, byte port2, int dischargeTime) {
@@ -395,22 +418,38 @@ void testCapacitor(byte port1, byte port2) {
   printStatus("        Done!");
 }
 
+void testBJT(byte C, byte B, byte E){
+  lcd.clear();
+  printType("BJT");
+  printStatus("Trying as PNP");
+  initBJT(B, C, E, 0);
+  float vb = getVoltage(B);  
+  float vc = getVoltage(C);
+  float ic = vc / R_LOW; 
+  float ib = vb / (R_LOW + R_SMALL);
+  if(vb < 0.01 || vb < vc){
+    printStatus("Attaching 470k ohm to B");
+    initBJT(B, C, E, 1);
+    vb = getVoltage(B);
+    vc = getVoltage(C);
+    ic = vc / R_LOW;
+    ib = vb / (R_LOW + R_BIG);
+  }
+  float ve = getVoltage(E);
+  float ie = ve / (R_HIGH + R_SMALL);
+  float beta = ic / ie;
+  printValue(beta, "");
+  Serial.println(beta);
+  Serial.println(ib);
+  Serial.println(ic);
+  Serial.println(ie);
+}
+
 
 
 void setup() {
   lcd.begin(84, 48);
   Serial.begin(9600);
-//  switchToBigResistor(0, 1);
-//  float v = analogRead(0);
-//  delay(1000);
-//  switchToBigResistor(1, 0);
-//  v = analogRead(1);
-//  delay(1000);
-  //  pinMode(READ_1, OUTPUT);
-  //  pinMode(READ_2, OUTPUT);
-  //  digitalWrite(READ_1, HIGH);
-  //  digitalWrite(READ_2, LOW);
-  //  switchToSmallResistor(0, 1);
 }
 
 void loop() {
@@ -423,45 +462,13 @@ void loop() {
 
 //float v;
 
-//void loop() {
-//  v = getVoltage(1);
-//  lcd.setCursor(0, 1);
-//  lcd.print(v);
-//  delay(100);
-//  setPort(0, BIG, HIGH);
-//  setPort(1, READ, LOW);
-//  delay(10);
-//  printVoltage(0, 0);
-//  delay(100);
-//  setPort(0, BIG, HIGH);
-//  setPort(1, READ, LOW);
-//  delay(10);
-//  printVoltage(0, 1);
-//  delay(100);
-//  setPort(0, BIG, HIGH);
-//  setPort(1, READ, LOW);
-//  printVoltage(0, 0);
-//  delay(200);
-//  setPort(1, BIG, HIGH);
-//  setPort(0, READ, LOW);
-//  printVoltage(1, 1);
-//  delay(200);
-//  lcd.setCursor(0, 1);
-//  lcd.print((int)testConnectivity(1, 0));
-//  delay(200);
-//  lcd.setCursor(0, 2);
-//  lcd.print((int)testConnectivity(1, 2));
-//  delay(200);
-//  lcd.setCursor(0, 3);
-//  lcd.print((int)testConnectivity(2, 1));
-//  delay(200);
-//  lcd.setCursor(0, 4);
-//  lcd.print((int)testConnectivity(0, 2));
-//  delay(200);
-//  lcd.setCursor(0, 5);
-//  lcd.print((int)testConnectivity(2, 0));
-//  delay(200);
-//}
+void loop() {
+  printStatus("welcome");
+  delay(2000);
+  testBJT(0, 1, 2);
+  //testResistor(0, 1);
+  delay(3000);
+}
 
 //void loop() {
 //  switchToSmallResistor(0, 1);
