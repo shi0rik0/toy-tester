@@ -33,6 +33,7 @@ const float R_HIGH = 22;
 const float R_LOW = 19;
 
 
+const int ARRAY_LEN = 100; 
 
 
 #define DEBUG
@@ -73,7 +74,9 @@ const byte NUM_PREFIXES_SMALL = 4;
 const char* const PREFIXES_SMALL[NUM_PREFIXES_SMALL] = {"m", "u", "n", "p"};
 const byte NUM_PREFIXES_BIG = 2;
 const char* const PREFIXES_BIG[NUM_PREFIXES_BIG] = {"k", "M"};
-
+int __abs(int x){
+  return (x < 0 ? -x : x);
+}
 void printValue(float val, const char* unit) {
   lcd.setCursor(0, 1);
   lcd.clearLine();
@@ -145,6 +148,22 @@ void switchToBigResistor(byte port1, byte port2) {
   digitalWrite(PORT[port2][READ], HIGH);
 }
 
+void dischargeMode(byte port1, byte port2){ // 让电容放电
+  pinMode(PORT[port1][SMALL], INPUT);
+  pinMode(PORT[port1][BIG], OUTPUT);
+  digitalWrite(PORT[port1][BIG], LOW);
+  pinMode(PORT[port1][READ], INPUT);
+  pinMode(PORT[port2][SMALL], INPUT);
+  pinMode(PORT[port2][BIG], INPUT);
+  pinMode(PORT[port2][READ], OUTPUT);
+  digitalWrite(PORT[port2][READ], LOW);
+}
+
+void dischargeCapacitor(byte port1, byte port2, int dischargeTime){
+  dischargeMode(port1, port2);
+  delay(dischargeTime);
+}
+
 float getResistance(byte port1, byte port2, float r0) {
   float v = getAvgVoltage(port1, 10, 10);
   float r = r0 * (VCC - v) / v;
@@ -152,7 +171,49 @@ float getResistance(byte port1, byte port2, float r0) {
 }
 
 
+void recordVoltages(float *vArr, byte port1, int cnt, int interval){
+  for (int i = 0; i < cnt; ++i){
+    vArr[i] = getVoltage(port1);
+    delayMicroseconds(interval);
+  }
+}
 
+float getTao(float *vArr, int pointCnt, int testCnt, int interval){
+  const int THRESH = 0.1; // 电压为0的阈值
+  float lastSumVoltage = 0; // 最后几个数据点的和
+  for(int i = pointCnt - testCnt; i < pointCnt; ++i){
+    lastSumVoltage += vArr[i];
+  }
+  float tao = -1;
+  float oneTaoVolt = 0.3679 * VCC;  // 经过1tao时间，电压应该衰减为0.3679倍
+  if (lastSumVoltage < THRESH * testCnt){ // 曲线最后达到水平，电容充满了
+    float minDiff = VCC, diff = VCC;
+    int minDiffIndex = 0;
+    for (int i = 0; i < cnt; ++i){   // 找到最接近0.3679*VCC的点
+      diff = __abs(vArr[i] - oneTaoVolt);
+      if(diff < minDiff){
+        minDiff = oneTaoVolt;
+        minDiffIndex = i;
+      }
+    }
+    tao = (float)minDiffIndex * interval * 1e-6 // 单位是s
+  }
+  else{ // 曲线没到水平的情况，待完成
+    tao = -1;
+  }
+
+  return tao;
+}
+
+float getCapacitance(byte port1, byte port2, float r0){
+  float vArr[ARRAY_LEN];
+  int pointCnt = 20; // 取点数目
+  int testCnt = 5;   // 检验曲线是否水平的取点数目
+  int interval = 500; // 测量间隔(us)
+  recordVoltages(vArr, port1, pointCnt, interval);
+  flaot tao = getTao(vArr, pointCnt, testCnt, interval);
+  return tao / r0;    // tao = RC
+}
 
 void testResistor(byte port1, byte port2) {
   // 这个阈值是随便取的，我有一个计算更好的值的思路，但是还没算
@@ -173,6 +234,19 @@ void testResistor(byte port1, byte port2) {
   }
   float r = getResistance(port1, port2, r0);
   printValue(r, "Ohm");
+  printStatus("        Done!");
+}
+
+void testCapacitor(byte port1, byte port2){
+  lcd.clear();
+  printType("Capacitor");
+  printStatus("Wait...");
+  
+  switchToBigResistor(port1, port2); // 开始充电
+  float cap = getCapacitance(port1, port2, R_BIG);
+  dischargeCapacitor(port1, port2); //  电容放电
+
+  printValue(cap, "F");
   printStatus("        Done!");
 }
 
