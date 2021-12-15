@@ -33,7 +33,7 @@ const float R_HIGH = 22;
 const float R_LOW = 19;
 
 
-const int ARRAY_LEN = 100; 
+const int ARRAY_LEN = 100;
 
 
 #define DEBUG
@@ -44,7 +44,35 @@ const int ARRAY_LEN = 100;
 #define printDebug(x) ((void)0)
 #endif
 
+// 让 port 的三个引脚全部悬空
+void resetPort(byte port) {
+  for (byte i = 0; i < 3; ++i) {
+    pinMode(PORT[port][i], INPUT);
+  }
+}
 
+// 让 port 的 type 引脚接到 HIGH 或者 LOW，剩下的悬空
+void setPort(byte port, byte type, byte highOrLow) {
+  for (byte i = 0; i < 3; ++i) {
+    if (i == type) {
+      pinMode(PORT[port][i], OUTPUT);
+      digitalWrite(PORT[port][i], highOrLow);
+    } else {
+      pinMode(PORT[port][i], INPUT);
+    }
+  }
+}
+
+void goToLine(byte row) {
+  lcd.setCursor(0, row);
+  lcd.clearLine();
+}
+
+// 把 port 的电压打印到第 row 行
+void printVoltage(byte port, byte row) {
+  goToLine(row);
+  lcd.print(getVoltage(port));
+}
 
 float adcToVoltage(word adc) {
   return adc / 1023.0 * VCC;
@@ -74,7 +102,7 @@ const byte NUM_PREFIXES_SMALL = 4;
 const char* const PREFIXES_SMALL[NUM_PREFIXES_SMALL] = {"m", "u", "n", "p"};
 const byte NUM_PREFIXES_BIG = 2;
 const char* const PREFIXES_BIG[NUM_PREFIXES_BIG] = {"k", "M"};
-int __abs(int x){
+int __abs(int x) {
   return (x < 0 ? -x : x);
 }
 void printValue(float val, const char* unit) {
@@ -127,7 +155,7 @@ void printDebug_(const char* str) {
 }
 void resetOther(byte port1, byte port2) {
   const byte TABLE[3][3] = {
-    {-1, 2, 1},
+    { -1, 2, 1},
     {2, -1, 0},
     {1, 0, -1},
   };
@@ -159,7 +187,7 @@ void switchToSmallResistor(byte port1, byte port2) {
 
 //void switchToBigResistor(byte port1, byte port2) {
 //  resetOther(port1, port2);
-//  
+//
 //  pinMode(PORT[port1][SMALL], OUTPUT);
 //  pinMode(PORT[port1][BIG], OUTPUT);
 //  pinMode(PORT[port1][READ], OUTPUT);
@@ -172,9 +200,9 @@ void switchToSmallResistor(byte port1, byte port2) {
 //  digitalWrite(PORT[port2][SMALL], LOW);
 //  digitalWrite(PORT[port2][BIG], LOW);
 //  digitalWrite(PORT[port2][READ], LOW);
-//  
+//
 //  delay(100);
-//  
+//
 //  pinMode(PORT[port1][SMALL], INPUT);
 //  pinMode(PORT[port1][READ], INPUT);
 //  pinMode(PORT[port2][READ], OUTPUT);
@@ -183,7 +211,7 @@ void switchToSmallResistor(byte port1, byte port2) {
 
 void switchToBigResistor(byte port1, byte port2) {
   resetOther(port1, port2);
-  
+
   pinMode(PORT[port1][SMALL], INPUT);
   pinMode(PORT[port1][BIG], OUTPUT);
   pinMode(PORT[port1][READ], INPUT);
@@ -213,34 +241,45 @@ void discharge(byte port1, byte port2) {
   digitalWrite(PORT[port2][READ], LOW);
   resetOther(port1, port2);
 }
-void dischargeModeBigR(byte port1, byte port2){ // 让电容放电(在大电阻上)
-  pinMode(PORT[port1][SMALL], INPUT);
-  pinMode(PORT[port1][BIG], OUTPUT);
-  digitalWrite(PORT[port1][BIG], LOW);
-  pinMode(PORT[port1][READ], INPUT);
-  pinMode(PORT[port2][SMALL], INPUT);
-  pinMode(PORT[port2][BIG], INPUT);
-  pinMode(PORT[port2][READ], OUTPUT);
-  digitalWrite(PORT[port2][READ], LOW);
+
+
+//void dischargeModeSmallR(byte port1, byte port2) { // 让电容放电(在小电阻上)
+//  pinMode(PORT[port1][SMALL], OUTPUT);
+//  pinMode(PORT[port1][BIG], INPUT);
+//  digitalWrite(PORT[port1][SMALL], LOW);
+//  pinMode(PORT[port1][READ], INPUT);
+//  pinMode(PORT[port2][SMALL], INPUT);
+//  pinMode(PORT[port2][BIG], INPUT);
+//  pinMode(PORT[port2][READ], OUTPUT);
+//  digitalWrite(PORT[port2][READ], LOW);
+//}
+//void dischargeModeBigR(byte port1, byte port2) { // 让电容放电(在大电阻上)
+//  pinMode(PORT[port1][SMALL], INPUT);
+//  pinMode(PORT[port1][BIG], OUTPUT);
+//  digitalWrite(PORT[port1][BIG], LOW);
+//  pinMode(PORT[port1][READ], INPUT);
+//  pinMode(PORT[port2][SMALL], INPUT);
+//  pinMode(PORT[port2][BIG], INPUT);
+//  pinMode(PORT[port2][READ], OUTPUT);
+//  digitalWrite(PORT[port2][READ], LOW);
+//}
+
+void dischargeModeSmallR(byte port1, byte port2) { // 让电容放电(在小电阻上)
+  setPort(port1, SMALL, LOW);
+  setPort(port2, READ, LOW);
 }
 
-void dischargeModeSmallR(byte port1, byte port2){ // 让电容放电(在小电阻上)
-  pinMode(PORT[port1][SMALL], OUTPUT);
-  pinMode(PORT[port1][BIG], INPUT);
-  digitalWrite(PORT[port1][SMALL], LOW);
-  pinMode(PORT[port1][READ], INPUT);
-  pinMode(PORT[port2][SMALL], INPUT);
-  pinMode(PORT[port2][BIG], INPUT);
-  pinMode(PORT[port2][READ], OUTPUT);
-  digitalWrite(PORT[port2][READ], LOW);
+void dischargeModeBigR(byte port1, byte port2) { // 让电容放电(在大电阻上)
+  setPort(port1, BIG, LOW);
+  setPort(port2, READ, LOW);
 }
 
-void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime){
+void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime) {
   dischargeModeSmallR(port1, port2);
   delay(dischargeTime);
 }
 
-void dischargeCapacitorBigR(byte port1, byte port2, int dischargeTime){
+void dischargeCapacitorBigR(byte port1, byte port2, int dischargeTime) {
   dischargeModeBigR(port1, port2);
   delay(dischargeTime);
 }
@@ -252,46 +291,47 @@ float getResistance(byte port1, byte port2, float r0) {
 }
 
 bool testConnectivity(byte port1, byte port2) {
-  const float THRESHOLD_LOW = 0.03;
-  const float THRESHOLD_HIGH = 4.97;
-//  discharge(port1, port2);
-//  delay(5);
-  switchToBigResistor(port2, port1);
-//  delay(10);
-  float v = getVoltage(port2);
-  Serial.println(v);
+  const float THRESHOLD_LOW = 0.1;
+  const float THRESHOLD_HIGH = 4.9;
+  discharge(port1, port2);
+  delay(5);
+  setPort(port1, BIG, HIGH);
+  setPort(port2, READ, LOW);
+  delay(10);
+  float v = getVoltage(port1);
   if (v > THRESHOLD_LOW && v < THRESHOLD_HIGH) {
     return true;
   }
-  switchToSmallResistor(port2, port1);
-//  delay(10);
-  v = getVoltage(port2);
-  Serial.println(v);
+  setPort(port1, SMALL, HIGH);
+  delay(10);
+  v = getVoltage(port1);
   if (v > THRESHOLD_LOW && v < THRESHOLD_HIGH) {
     return true;
   }
   return false;
+}
 
-bool recordVoltages(float *vArr, byte port1, int cnt, int interval){  // true: 电压下降值客观; false: 电压基本不变
+// 返回值：true: 电压下降值可观; false: 电压基本不变
+bool recordVoltages(float * vArr, byte port1, int cnt, int interval) { 
   float THRESH = 0.5;
-  for (int i = 0; i < cnt; ++i){
+  for (int i = 0; i < cnt; ++i) {
     vArr[i] = getVoltage(port1);
     delayMicroseconds(interval);
   }
-  return (vArr[cnt - 1] - vArr[0] > THRESH);
+  return (vArr[0] - vArr[cnt - 1] > THRESH);
 }
 
-float getTao(float *vArr, int pointCnt, int interval){
+float getTao(float * vArr, int pointCnt, int interval) {
   const int THRESH = 0.1; // 电压为0的阈值
   float tao = -1;
   float sumTao = 0;
   int validCnt = 0;
-  const float validThresh = 0.01; 
+  const float validThresh = 0.01;
   // V = Vcc * e ** (-t / tao)
-  for(int i = 1; i < pointCnt; ++i){ // 计算tao平均值
+  for (int i = 1; i < pointCnt; ++i) { // 计算tao平均值
     float t = i * interval * 1e-6;
     float logDiff = log(VCC) - log(vArr[i]);
-    if (__abs(logDiff) > validThresh){ // 如果电压接近0 就不计入
+    if (__abs(logDiff) > validThresh) { // 如果电压接近0 就不计入
       sumTao += (t / logDiff);
       ++validCnt;;
     }
@@ -300,15 +340,15 @@ float getTao(float *vArr, int pointCnt, int interval){
   return sumTao / (float)(validCnt);
 }
 
-float getCapacitance(byte port1, byte port2, float r0){
+float getCapacitance(byte port1, byte port2, float r0) {
   float vArr[ARRAY_LEN];
   int pointCnt = 50; // 取点数目
   int interval = 500; // 测量间隔(us)
 
-  if(!recordVoltages(vArr, port1, pointCnt, interval)){
+  if (!recordVoltages(vArr, port1, pointCnt, interval)) {
     return -1;
   }
-  flaot tao = getTao(vArr, pointCnt, interval);
+  float tao = getTao(vArr, pointCnt, interval);
   return tao / r0;    // tao = RC
 }
 
@@ -334,18 +374,18 @@ void testResistor(byte port1, byte port2) {
   printStatus("        Done!");
 }
 
-void testCapacitor(byte port1, byte port2){
-  const int dischargeTime = 3000;
+void testCapacitor(byte port1, byte port2) {
+  const int dischargeTime = 1000;
   lcd.clear();
   printType("Capacitor");
-  printStatus("Trying Small F:");
+  printDebug("Small");
   float cap;
   switchToBigResistor(port1, port2); // 开始充电
   cap = getCapacitance(port1, port2, R_BIG);
   dischargeCapacitorBigR(port1, port2, dischargeTime); //  电容放电
 
-  if(cap < 0){
-    printStatus("Failed, Trying big F"); 
+  if (cap < 0) {
+    printStatus("Trying big F");
     switchToSmallResistor(port1, port2); // 开始充电
     cap = getCapacitance(port1, port2, R_SMALL);
     dischargeCapacitorSmallR(port1, port2, dischargeTime); //  电容放电
@@ -356,41 +396,59 @@ void testCapacitor(byte port1, byte port2){
 }
 
 
+
 void setup() {
   lcd.begin(84, 48);
   Serial.begin(9600);
-  switchToBigResistor(0, 1);
-  float v = analogRead(0);
-  delay(1000);
-  switchToBigResistor(1, 0);
-  v = analogRead(1);
-  delay(1000);
-//  pinMode(READ_1, OUTPUT);
-//  pinMode(READ_2, OUTPUT);
-//  digitalWrite(READ_1, HIGH);
-//  digitalWrite(READ_2, LOW);
-//  switchToSmallResistor(0, 1);
+//  switchToBigResistor(0, 1);
+//  float v = analogRead(0);
+//  delay(1000);
+//  switchToBigResistor(1, 0);
+//  v = analogRead(1);
+//  delay(1000);
+  //  pinMode(READ_1, OUTPUT);
+  //  pinMode(READ_2, OUTPUT);
+  //  digitalWrite(READ_1, HIGH);
+  //  digitalWrite(READ_2, LOW);
+  //  switchToSmallResistor(0, 1);
 }
 
-//void loop() {
-//  testResistor(0, 1);
-//  delay(3000);
-//}
-
-float v;
-
 void loop() {
+  bool r = testConnectivity(0, 1);
+  lcd.setCursor(0, 0);
+  lcd.clearLine();
+  lcd.print((int)r);
+  delay(3000);
+}
+
+//float v;
+
+//void loop() {
 //  v = getVoltage(1);
 //  lcd.setCursor(0, 1);
 //  lcd.print(v);
 //  delay(100);
-
-  lcd.setCursor(0, 0);
-  lcd.print((int)testConnectivity(0, 1));
-  delay(1000);
-  lcd.setCursor(0, 1);
-  lcd.print((int)testConnectivity(1, 0));
-  delay(1000);
+//  setPort(0, BIG, HIGH);
+//  setPort(1, READ, LOW);
+//  delay(10);
+//  printVoltage(0, 0);
+//  delay(100);
+//  setPort(0, BIG, HIGH);
+//  setPort(1, READ, LOW);
+//  delay(10);
+//  printVoltage(0, 1);
+//  delay(100);
+//  setPort(0, BIG, HIGH);
+//  setPort(1, READ, LOW);
+//  printVoltage(0, 0);
+//  delay(200);
+//  setPort(1, BIG, HIGH);
+//  setPort(0, READ, LOW);
+//  printVoltage(1, 1);
+//  delay(200);
+//  lcd.setCursor(0, 1);
+//  lcd.print((int)testConnectivity(1, 0));
+//  delay(200);
 //  lcd.setCursor(0, 2);
 //  lcd.print((int)testConnectivity(1, 2));
 //  delay(200);
@@ -403,7 +461,7 @@ void loop() {
 //  lcd.setCursor(0, 5);
 //  lcd.print((int)testConnectivity(2, 0));
 //  delay(200);
-}
+//}
 
 //void loop() {
 //  switchToSmallResistor(0, 1);
