@@ -94,7 +94,7 @@ void printValue(float val, const char* unit) {
   } else if (val >= 1000) {
     val /= 1000;
     byte i = 0;
-    while (val < 1) {
+    while (val >= 1000) {
       val /= 1000;
       i += 1;
       if (i == NUM_PREFIXES_BIG) {
