@@ -170,6 +170,27 @@ void dischargeModeSmallR(byte port1, byte port2){ // 让电容放电(在小电�
   digitalWrite(PORT[port2][READ], LOW);
 }
 
+void initBJT(byte B, byte C, byte E, bool bBigR){ //bBigR=0 B port uses 680 ohm, else 470k ohm.
+  if(!bBigR){
+    pinMode(PORT[B][SMALL], OUTPUT);
+    pinMode(PORT[B][BIG], INPUT);
+    digitalWrite(PORT[B][SMALL], HIGH);
+  }else{
+    pinMode(PORT[B][SMALL], INPUT);
+    pinMode(PORT[B][BIG], OUTPUT);
+    digitalWrite(PORT[B][HIGH], HIGH);
+  }
+  pinMode(PORT[B][READ], INPUT);
+  pinMode(PORT[C][READ], OUTPUT);
+  pinMode(PORT[C][SMALL], INPUT);
+  pinMode(PORT[C][BIG], INPUT);
+  pinMode(PORT[E][READ], INPUT);
+  pinMode(PORT[E][SMALL], OUTPUT);
+  pinMode(PORT[E][BIG], INPUT);
+  digitalWrite(PORT[E][SMALL], HIGH);
+  digitalWrite(PORT[E][SMALL], LOW);
+}
+
 void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime){
   dischargeModeSmallR(port1, port2);
   delay(dischargeTime);
@@ -223,7 +244,7 @@ float getCapacitance(byte port1, byte port2, float r0){
   if(!recordVoltages(vArr, port1, pointCnt, interval)){
     return -1;
   }
-  flaot tao = getTao(vArr, pointCnt, interval);
+  float tao = getTao(vArr, pointCnt, interval);
   return tao / r0;    // tao = RC
 }
 
@@ -270,11 +291,42 @@ void testCapacitor(byte port1, byte port2){
   printStatus("        Done!");
 }
 
+void testBJT(byte C, byte B, byte E){
+  lcd.clear();
+  printType("BJT");
+  printStatus("Trying as PNP");
+  initBJT(B, C, E, 0);
+  float vb = getVoltage(B);  
+  float vc = getVoltage(C);
+  float ic = vc / R_LOW; 
+  float ib = vb / (R_LOW + R_SMALL);
+  if(vb < 0.01 || vb < vc){
+    printStatus("Attaching 470k ohm to B");
+    initBJT(B, C, E, 1);
+    vb = getVoltage(B);
+    vc = getVoltage(C);
+    ic = vc / R_LOW;
+    ib = vb / (R_LOW + R_BIG);
+  }
+  float ve = getVoltage(E);
+  float ie = ve / (R_HIGH + R_SMALL);
+  float beta = ic / ie;
+  printValue(beta, "");
+  Serial.println(beta);
+  Serial.println(ib);
+  Serial.println(ic);
+  Serial.println(ie);
+}
+
 
 void setup() {
   lcd.begin(84, 48);
+  Serial.begin(9600);
 }
 void loop() {
-  testResistor(0, 1);
+  printStatus("welcome");
+  delay(2000);
+  testBJT(0, 1, 2);
+  //testResistor(0, 1);
   delay(3000);
 }
