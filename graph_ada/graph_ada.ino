@@ -49,7 +49,7 @@ All text above, and the splash screen must be included in any redistribution
 void setup()   {
   Serial.begin(9600);
   Serial.println("START!");
-  __initLCD(50);
+  __initLCD(60);
   delay(50);
 }
 
