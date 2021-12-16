@@ -312,7 +312,7 @@ bool recordVoltages(float *vArr, byte port1, int cnt, int interval) {
 }
 
 float getTao(float *vArr, int pointCnt, int interval) {
-  const int THRESH = 0.1; // 电压为0的阈值
+  const float THRESH = 0.1; // 电压为0的阈值
   float tao = -1;
   float sumTao = 0;
   int validCnt = 0;
