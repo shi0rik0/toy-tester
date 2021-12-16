@@ -30,9 +30,7 @@ const byte BIG_3 = 13;
 const byte READ_3 = A0;
 
 // 把引脚写在一个数组里面，方便取用，比如说第一组的小电阻端口就是 PORT[0][SMALL]
-const byte SMALL = 0;
-const byte BIG = 1;
-const byte READ = 2;
+enum PortType { SMALL = 0, BIG = 1, READ = 2 };
 const byte PORT[3][3] = {
     {SMALL_1, BIG_1, READ_1},
     {SMALL_2, BIG_2, READ_2},
@@ -43,6 +41,7 @@ const float VCC = 5;
 const float R_BIG = 470e3;
 const float R_SMALL = 680;
 
+// 三极管的两种类型
 enum BJTType { PNP, NPN };
 
 // 端口自身的内阻，似乎用不上
@@ -74,6 +73,19 @@ void printValue(float val, const char *unit);
 void printStatus(const char *str);
 void printDebug_(const char *str);
 byte getOtherPort(byte port1, byte port2);
+
+// 让 port1 串上小电阻并接地，port2 接上 VCC，另外一个端口悬空
+void switchToSmallResistor(byte port1, byte port2);
+// 让 port1 串上大电阻并接地，port2 接上 VCC，另外一个端口悬空
+void switchToBigResistor(byte port1, byte port2);
+
+void measureResistor(byte port1, byte port2);
+// 在 port1 串上电阻 r0 并接地，port2 接上 VCC 的情况下测量电阻，返回阻值
+float getResistance(byte port1, byte port2, float r0);
+
+void measureCapacitor(byte port1, byte port2);
+
+void measure();
 
 // -------------------函数声明结束-----------------
 
@@ -212,96 +224,32 @@ byte getOtherPort(byte port1, byte port2) {
 }
 
 void switchToSmallResistor(byte port1, byte port2) {
-  pinMode(PORT[port1][SMALL], OUTPUT);
-  pinMode(PORT[port1][BIG], INPUT);
-  pinMode(PORT[port1][READ], INPUT);
-  pinMode(PORT[port2][SMALL], INPUT);
-  pinMode(PORT[port2][BIG], INPUT);
-  pinMode(PORT[port2][READ], OUTPUT);
-  digitalWrite(PORT[port1][SMALL], LOW);
-  digitalWrite(PORT[port1][BIG], LOW);
-  digitalWrite(PORT[port1][READ], LOW);
-  digitalWrite(PORT[port2][SMALL], LOW);
-  digitalWrite(PORT[port2][BIG], LOW);
-  digitalWrite(PORT[port2][READ], HIGH);
-  resetOther(port1, port2);
+  resetPort(getOtherPort(port1, port2));
+  setPort(port1, SMALL, LOW);
+  setPort(port2, READ, HIGH);
 }
-
-// void switchToBigResistor(byte port1, byte port2) {
-//  resetOther(port1, port2);
-//
-//  pinMode(PORT[port1][SMALL], OUTPUT);
-//  pinMode(PORT[port1][BIG], OUTPUT);
-//  pinMode(PORT[port1][READ], OUTPUT);
-//  pinMode(PORT[port2][SMALL], INPUT);
-//  pinMode(PORT[port2][BIG], INPUT);
-//  pinMode(PORT[port2][READ], INPUT);
-//  digitalWrite(PORT[port1][SMALL], LOW);
-//  digitalWrite(PORT[port1][BIG], LOW);
-//  digitalWrite(PORT[port1][READ], LOW);
-//  digitalWrite(PORT[port2][SMALL], LOW);
-//  digitalWrite(PORT[port2][BIG], LOW);
-//  digitalWrite(PORT[port2][READ], LOW);
-//
-//  delay(100);
-//
-//  pinMode(PORT[port1][SMALL], INPUT);
-//  pinMode(PORT[port1][READ], INPUT);
-//  pinMode(PORT[port2][READ], OUTPUT);
-//  digitalWrite(PORT[port2][READ], HIGH);
-//}
 
 void switchToBigResistor(byte port1, byte port2) {
-  resetOther(port1, port2);
-
-  pinMode(PORT[port1][SMALL], INPUT);
-  pinMode(PORT[port1][BIG], OUTPUT);
-  pinMode(PORT[port1][READ], INPUT);
-  pinMode(PORT[port2][SMALL], INPUT);
-  pinMode(PORT[port2][BIG], INPUT);
-  pinMode(PORT[port2][READ], OUTPUT);
-  digitalWrite(PORT[port1][SMALL], LOW);
-  digitalWrite(PORT[port1][BIG], LOW);
-  digitalWrite(PORT[port1][READ], LOW);
-  digitalWrite(PORT[port2][SMALL], LOW);
-  digitalWrite(PORT[port2][BIG], LOW);
-  digitalWrite(PORT[port2][READ], HIGH);
-}
-
-void discharge(byte port1, byte port2) {
-  byte port3 = getOtherPort(port1, port2);
-  pinMode(PORT[port1][SMALL], OUTPUT);
-  pinMode(PORT[port1][BIG], OUTPUT);
-  pinMode(PORT[port1][READ], OUTPUT);
-  pinMode(PORT[port2][SMALL], OUTPUT);
-  pinMode(PORT[port2][BIG], OUTPUT);
-  pinMode(PORT[port2][READ], OUTPUT);
-  pinMode(PORT[port3][SMALL], OUTPUT);
-  pinMode(PORT[port3][BIG], OUTPUT);
-  pinMode(PORT[port3][READ], OUTPUT);
-  digitalWrite(PORT[port1][SMALL], LOW);
-  digitalWrite(PORT[port1][BIG], LOW);
-  digitalWrite(PORT[port1][READ], LOW);
-  digitalWrite(PORT[port2][SMALL], LOW);
-  digitalWrite(PORT[port2][BIG], LOW);
-  digitalWrite(PORT[port2][READ], LOW);
-  digitalWrite(PORT[port3][SMALL], LOW);
-  digitalWrite(PORT[port3][BIG], LOW);
-  digitalWrite(PORT[port3][READ], LOW);
-}
-
-void dischargeModeSmallR(byte port1, byte port2) { // 让电容放电(在小电阻上)
-  setPort(port1, SMALL, LOW);
-  setPort(port2, READ, LOW);
-}
-
-void dischargeModeBigR(byte port1, byte port2) { // 让电容放电(在大电阻上)
+  resetPort(getOtherPort(port1, port2));
   setPort(port1, BIG, LOW);
-  setPort(port2, READ, LOW);
+  setPort(port2, READ, HIGH);
 }
 
-void dischargeCapacitorSmallR(byte port1, byte port2, int dischargeTime) {
-  dischargeModeSmallR(port1, port2);
+void discharge(byte port1, byte port2, PortType type) {
+  resetPort(getOtherPort(port1, port2));
+  setPort(port1, type, LOW);
+  setPort(port2, type, LOW);
+}
+
+void dischargeCapacitorBySmallResistor(byte port1, byte port2,
+                                       word dischargeTime) {
+  discharge(port1, port2, SMALL);
+  delay(dischargeTime);
+}
+
+void dischargeCapacitorByBigResistor(byte port1, byte port2,
+                                     word dischargeTime) {
+  discharge(port1, port2, BIG);
   delay(dischargeTime);
 }
 
@@ -325,11 +273,6 @@ void initBJT(byte B, byte C, byte E,
   pinMode(PORT[E][BIG], INPUT);
   digitalWrite(PORT[E][SMALL], HIGH);
   digitalWrite(PORT[E][SMALL], LOW);
-}
-
-void dischargeCapacitorBigR(byte port1, byte port2, int dischargeTime) {
-  dischargeModeBigR(port1, port2);
-  delay(dischargeTime);
 }
 
 float getResistance(byte port1, byte port2, float r0) {
@@ -400,9 +343,10 @@ float getCapacitance(byte port1, byte port2, float r0) {
   return tao / r0; // tao = RC
 }
 
-void testResistor(byte port1, byte port2) {
-  // 这个阈值是随便取的，我有一个计算更好的值的思路，但是还没算
-  const float THRESHOLD = 4.5;
+void measureResistor(byte port1, byte port2) {
+  // 这个阈值是计算得到的
+  static const float THRESHOLD = 4.8;
+
   lcd.clear();
   printType("Resistor");
   printStatus("Wait...");
@@ -422,7 +366,7 @@ void testResistor(byte port1, byte port2) {
   printStatus("        Done!");
 }
 
-void testCapacitor(byte port1, byte port2) {
+void measureCapacitor(byte port1, byte port2) {
   const int dischargeTime = 1000;
   lcd.clear();
   printType("Capacitor");
@@ -430,13 +374,13 @@ void testCapacitor(byte port1, byte port2) {
   float cap;
   switchToBigResistor(port1, port2); // 开始充电
   cap = getCapacitance(port1, port2, R_BIG);
-  dischargeCapacitorBigR(port1, port2, dischargeTime); //  电容放电
+  dischargeCapacitorByBigResistor(port1, port2, dischargeTime); //  电容放电
 
   if (cap < 0) {
-    printStatus("Trying big F");
+    printDebug("Big");
     switchToSmallResistor(port1, port2); // 开始充电
     cap = getCapacitance(port1, port2, R_SMALL);
-    dischargeCapacitorSmallR(port1, port2, dischargeTime); //  电容放电
+    dischargeCapacitorBySmallResistor(port1, port2, dischargeTime); //  电容放电
   }
 
   printValue(cap, "F");
@@ -544,12 +488,15 @@ void measure() {
   }
   byte count = countTrue(connectivity, 3, 3);
   if (count == 1) {
+    byte port1;
+    byte port2;
+    getTwoPorts(connectivity, &port1, &port2);
     // 是二极管
   } else if (count == 2) {
     if (isSymmetric(connectivity, 3)) {
       byte port1;
       byte port2;
-      getSymmetricPorts(connectivity, &port1, &port2);
+      getTwoPorts(connectivity, &port1, &port2);
       // 是电容或者电阻
     } else {
       byte b;
