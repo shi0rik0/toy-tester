@@ -2,9 +2,6 @@
 #include <Adafruit_PCD8544.h>
 #include <math.h>
 
-
-
-
 // -----------------全局变量定义----------------------
 
 // Software SPI (slower updates, more flexible pin options):
@@ -44,9 +41,9 @@ const byte READ_3 = A0;
 // 把引脚写在一个数组里面，方便取用，比如说第一组的小电阻端口就是 PORT[0][SMALL]
 enum PortType { SMALL = 0, BIG = 1, READ = 2 };
 const byte PORT[3][3] = {
-  {SMALL_1, BIG_1, READ_1},
-  {SMALL_2, BIG_2, READ_2},
-  {SMALL_3, BIG_3, READ_3},
+    {SMALL_1, BIG_1, READ_1},
+    {SMALL_2, BIG_2, READ_2},
+    {SMALL_3, BIG_3, READ_3},
 };
 
 const float VCC = 5;
@@ -69,7 +66,6 @@ const char *const PREFIXES_BIG[NUM_PREFIXES_BIG] = {"k", "M"};
 
 const char *STATUS_RUNNING = "Wait...";
 const char *STATUS_OK = "        Done!";
-
 
 // -----------------常量定义结束------------------------
 
@@ -151,9 +147,7 @@ void setPort(byte port, byte type, byte highOrLow) {
   }
 }
 
-
-template <typename T>
-void printLine(byte row, const T &x) {
+template <typename T> void printLine(byte row, const T &x) {
   lcd.setCursor(0, row * 8);
   lcd.fillRect(0, row * 8, 84, 8, WHITE); // 清除一行，一行显示14个字符，一共6行
   lcd.setCursor(0, row * 8);
@@ -167,9 +161,7 @@ void printVoltage(byte port, byte row) {
   lcd.print(getVoltage(port));
 }
 
-float adcToVoltage(word adc) {
-  return adc / 1023.0 * VCC;
-}
+float adcToVoltage(word adc) { return adc / 1023.0 * VCC; }
 
 float getVoltage(byte port) {
   // 多测几次，以免电容干扰
@@ -187,8 +179,6 @@ float getAvgVoltage(byte port, word times, word interval) {
   }
   return s / times;
 }
-
-
 
 void printValue(float val, const char *unit) {
   goToLine(1);
@@ -235,7 +225,7 @@ void printStatus(const char *str) {
   lcd.display();
 }
 
-//void printDebug_(const char *str) {
+// void printDebug_(const char *str) {
 //  goToLine(4);
 //  lcd.print(str);
 //  lcd.display();
@@ -243,9 +233,9 @@ void printStatus(const char *str) {
 
 byte getOtherPort(byte port1, byte port2) {
   static const byte TABLE[3][3] = {
-    { -1, 2, 1},
-    {2, -1, 0},
-    {1, 0, -1},
+      {-1, 2, 1},
+      {2, -1, 0},
+      {1, 0, -1},
   };
   return TABLE[port1][port2];
 }
@@ -295,16 +285,16 @@ void safeDischarge() {
   }
 }
 
-void initBJT(byte B, byte C, byte E,
-             bool bBigR) { // bBigR=0 B port uses 680 ohm, else 470k ohm.
+// bBigR=0 B port uses 680 ohm, else 470k ohm.
+void initPNP(byte B, byte C, byte E, bool bBigR) {
   if (!bBigR) {
     pinMode(PORT[B][SMALL], OUTPUT);
     pinMode(PORT[B][BIG], INPUT);
-    digitalWrite(PORT[B][SMALL], HIGH);
+    digitalWrite(PORT[B][SMALL], LOW);
   } else {
     pinMode(PORT[B][SMALL], INPUT);
     pinMode(PORT[B][BIG], OUTPUT);
-    digitalWrite(PORT[B][HIGH], HIGH);
+    digitalWrite(PORT[B][HIGH], LOW);
   }
   pinMode(PORT[B][READ], INPUT);
   pinMode(PORT[C][READ], OUTPUT);
@@ -314,7 +304,22 @@ void initBJT(byte B, byte C, byte E,
   pinMode(PORT[E][SMALL], OUTPUT);
   pinMode(PORT[E][BIG], INPUT);
   digitalWrite(PORT[E][SMALL], HIGH);
-  digitalWrite(PORT[E][SMALL], LOW);
+  digitalWrite(PORT[C][SMALL], LOW);
+}
+
+void initNPN(byte B, byte C, byte E) {
+  pinMode(PORT[B][SMALL], INPUT);
+  pinMode(PORT[B][BIG], OUTPUT);
+  digitalWrite(PORT[B][HIGH], HIGH);
+  pinMode(PORT[B][READ], INPUT);
+  pinMode(PORT[C][READ], INPUT);
+  pinMode(PORT[C][SMALL], OUTPUT);
+  pinMode(PORT[C][BIG], INPUT);
+  pinMode(PORT[E][READ], OUTPUT);
+  pinMode(PORT[E][SMALL], INPUT);
+  pinMode(PORT[E][BIG], INPUT);
+  digitalWrite(PORT[C][SMALL], HIGH);
+  digitalWrite(PORT[E][READ], LOW);
 }
 
 float getResistance(byte port1, byte port2, float r0) {
@@ -406,7 +411,6 @@ void measureResistor(byte port1, byte port2) {
   printStatus("        Done!");
 }
 
-
 // 这个函数丑了点，一会儿再改
 float getCapacitance2(byte port1, byte port2) {
   static const word DISCHARGE_TIME_BIG = 100;
@@ -414,15 +418,15 @@ float getCapacitance2(byte port1, byte port2) {
 
   const word dischargeTime = 1000; // 这个时间怎么确定的？
   lcd.clearDisplay();
-//  printType("Capacitor");
-//  printDebug("Small");
+  //  printType("Capacitor");
+  //  printDebug("Small");
   float cap;
   switchToBigResistor(port1, port2); // 开始充电
   cap = getCapacitance(port1, port2, R_BIG);
   dischargeByBigResistor(port1, port2, dischargeTime); //  电容放电
 
   if (cap < 0) {
-//    printDebug("Big");
+    //    printDebug("Big");
     switchToSmallResistor(port1, port2); // 开始充电
     cap = getCapacitance(port1, port2, R_SMALL);
     dischargeBySmallResistor(port1, port2, dischargeTime); //  电容放电
@@ -437,31 +441,65 @@ void measureCapacitor(byte port1, byte port2) {
   printStatus("        Done!");
 }
 
-void testBJT(byte C, byte B, byte E) {
-  lcd.clearDisplay();
-  printType("BJT");
+void testPNP(byte C, byte B, byte E) {
+  lcd.clear();
+  printType("PNP BJT");
   printStatus("Trying as PNP");
-  initBJT(B, C, E, 0);
+  initPNP(B, C, E, 0);
   float vb = getVoltage(B);
   float vc = getVoltage(C);
   float ic = vc / R_LOW;
   float ib = vb / (R_LOW + R_SMALL);
   if (vb < 0.01 || vb < vc) {
     printStatus("Attaching 470k ohm to B");
-    initBJT(B, C, E, 1);
+    initPNP(B, C, E, 1);
     vb = getVoltage(B);
     vc = getVoltage(C);
     ic = vc / R_LOW;
     ib = vb / (R_LOW + R_BIG);
   }
   float ve = getVoltage(E);
-  float ie = ve / (R_HIGH + R_SMALL);
-  float beta = ic / ie;
-  printValue(beta, "");
+  float ie = (VCC - ve) / (R_HIGH + R_SMALL);
+  float beta = ic / ib;
+  printValue(beta, "beta");
   Serial.println(beta);
-  Serial.println(ib);
-  Serial.println(ic);
-  Serial.println(ie);
+  Serial.println(vb);
+  Serial.println(vc);
+  Serial.println(ve);
+  Serial.println(ib * 1000);
+  Serial.println(ic * 1000);
+  Serial.println(ie * 1000);
+}
+
+void testNPN(byte C, byte B, byte E) {
+  lcd.clear();
+  printType("NPN BJT");
+  printStatus("Trying as NPN");
+  initNPN(B, C, E);
+  float vb = getVoltage(B);
+  vb = getVoltage(B);
+  vb = getVoltage(B);
+  vb = getVoltage(B);
+  float vc = getVoltage(C);
+  vc = getVoltage(C);
+  vc = getVoltage(C);
+  vc = getVoltage(C);
+  float ic = (VCC - vc) / (R_SMALL + R_HIGH);
+  float ib = (VCC - vb) / (R_HIGH + R_BIG);
+  float ve = getVoltage(E);
+  ve = getVoltage(E);
+  ve = getVoltage(E);
+  ve = getVoltage(E);
+  float ie = ve / R_LOW;
+  float beta = ic / ib;
+  printValue(beta, "beta");
+  Serial.println(beta);
+  Serial.println(vb);
+  Serial.println(vc);
+  Serial.println(ve);
+  Serial.println(ib * 1000);
+  Serial.println(ic * 1000);
+  Serial.println(ie * 1000);
 }
 
 byte countTrue(bool (*arr)[3]) {
