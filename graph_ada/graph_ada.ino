@@ -41,9 +41,10 @@ All text above, and the splash screen must be included in any redistribution
 // pin 7 - LCD chip select (CS)
 // pin 6 - LCD reset (RST)
 
+
+
 // Adafruit_PCD8544 lcd = Adafruit_PCD8544(3,4,5,7,6);
 // 在mygraph.cpp内设置
-
 
 void setup()   {
   Serial.begin(9600);
@@ -52,26 +53,36 @@ void setup()   {
   delay(50);
 }
 
-
-void loop() {
-  const int len = 11;
+void arctanTest(){
+  lcd.setCursor(0,0);
+  lcd.println("arctan test");
+  const int len = 80;
   float x[len], y[len];
+  for(int i = 0; i < len; i++){
+    x[i] = (float)i;
+    y[i] = 5.0 * atan(x[i] / 10.0);
+  }
+  graph(x, y, 0, 80, 0, 10, len);
+}
+void loop() {
+  arctanTest();
+  
+  /*
   for(int i = 0; i < len; i++){
     x[i] = i;
     y[i] = 2 * i;
   }
   graph(x,y, 0, 40, 0, 27, len);
-  for(int i = 0; i < len; i++){
-    x[i] = i;
-    y[i] = 1 * i;
-  }
-  graph(x,y, 0, 40, 0, 27, len);
+  */
+  
+  /*
   for(int i = 0; i < len; i++){
     x[i] = i;
     y[i] = i * i / 4;
   }
   graph(x,y, 0, 40, 0, 27, len);
-  delay(1000);
+  */
+  
 
   /*
   for(int i = 0; i < len; i++){
@@ -88,5 +99,6 @@ void loop() {
   graph(x,y,len);
   delay(10);
   */
+  delay(5000);
   lcd.clearDisplay();
 }

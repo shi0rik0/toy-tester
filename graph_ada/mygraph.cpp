@@ -13,6 +13,10 @@ void __initLCD(byte contrast){
   lcd.clearDisplay();
 }
 
+float __fmap(float x, float l1, float r1, float l2, float r2){
+  return (x - l1) * (r2 - l2) / (r1 - l1) + l2;
+}
+
 void testGraph(uint8_t *x, uint8_t *y, int len){ // 画测试图像
   int WIDTH = len;
   const int HEIGHT = LCD_HEIGHT;
@@ -31,18 +35,20 @@ void testGraph(uint8_t *x, uint8_t *y, int len){ // 画测试图像
 void graph(float *X, float *Y, float xMin, float xMax, float yMin, float yMax, int len) {  // xMin, xMax分别为x轴最小、最大刻度, y同理; len: 数据点个数
   int px, py; // previous x and y
   for(int i = 0; i < len; ++i){
-    int x = round(map(X[i], xMin, xMax, 0, LCD_WIDTH - 1));
-    int y = round(map(Y[i], yMin, yMax , 0, LCD_HEIGHT - 1));
-    Serial.print(x);
+    int x = round(__fmap(X[i], xMin, xMax, 0, LCD_WIDTH - 1));
+    int y = round(__fmap(Y[i], yMin, yMax , 0, LCD_HEIGHT - 1));
+    Serial.print(__fmap(X[i], xMin, xMax, 0, LCD_WIDTH - 1));
     Serial.print(' ');
-    Serial.print(y);
+    Serial.print(__fmap(Y[i], yMin, yMax , 0, LCD_HEIGHT - 1));
     Serial.print('\n');
     _setPixel(x, y , BLACK);
     if(i == 0){
-      ;
+      px = x;
+      py = y;
+      continue;
     }
-    // 连线
     
+    // 连线
     float incl = x == px ? 1e7 : (float)(y - py) / (float)(x - px);
     if(incl <= 1){
       for(int j = 1; px + j < x; ++j){
