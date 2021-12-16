@@ -62,13 +62,10 @@ void graph(uint8_t *x, uint8_t *y, int len){ // 画测试图像
   int WIDTH = len;
   const int HEIGHT = LCD_HEIGHT;
   int SIZE = WIDTH * HEIGHT;
-  
-  //arr = new uint8_t[SIZE];
-  //fillArr(arr, SIZE, 0);
-  //if(!k){
-    //drawXAxis(arr, WIDTH, HEIGHT);
-  //}
-  //drawYAxis(arr, WIDTH, HEIGHT);
+  lcd.setCursor(0,0);
+  lcd.println("Hello!");
+  lcd.setCursor(60,40); // setCursor和之前的库不一样，第一个参数是行，第二个是列，单位是像素
+  lcd.println("test");
   for(int i = 0; i < WIDTH; ++i){
     _setPixel(x[i], y[i] , BLACK);
   }
