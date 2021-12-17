@@ -4,6 +4,7 @@ void initLCD() {
   lcd.begin();
   lcd.setContrast(60); // 参数是对比度，张书源买的屏幕用60合适
   clearLCD();
+  refreshLCD();
 }
 
 void clearLCD() {
