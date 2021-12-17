@@ -9,6 +9,7 @@ Adafruit_PCD8544 lcd(3, 4, 5, 7, 6);
 
 
 // 以下是引脚定义，SMALL表示小电阻，BIG表示大电阻，READ表示模拟输入
+// 这里的9, 10, 11 可以挪到A3, A4, A5, ADC口支持digitalWrite()
 const PinNum SMALL_1 = 8;
 const PinNum BIG_1 = 9;
 const PinNum READ_1 = A2;
@@ -18,12 +19,18 @@ const PinNum READ_2 = A1;
 const PinNum SMALL_3 = 12;
 const PinNum BIG_3 = 13;
 const PinNum READ_3 = A0;
+// 这三个（可能只需要两个）引脚必须要PWM
+// 只能是 3, 5, 6, 9, 10, 11
+const PinNum WRITE_1 = -1;
+const PinNum WRITE_2 = -1;
+const PinNum WRITE_3 = -1;
 
 const PinNum PORT[3][3] = {
     {SMALL_1, BIG_1, READ_1},
     {SMALL_2, BIG_2, READ_2},
     {SMALL_3, BIG_3, READ_3},
 };
+
 
 const float VCC = 5;
 const float R_BIG = 470e3;
@@ -83,4 +90,17 @@ float getVoltage(PortNum port, byte times) {
     analogRead(pin);
   }
   return adcToVoltage(analogRead(pin));
+}
+
+int voltageToPWM(float voltage){
+  if(voltage < 0){
+    return 0;
+  }
+  if(voltage > 5.0){
+    return 255;
+  }
+  return round(voltage / VCC * 255.0);
+}
+void setVoltage(PinNum pin, float voltage) {
+  analogWrite(pin, voltageToPWM(voltage));
 }
