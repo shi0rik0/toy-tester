@@ -8,12 +8,13 @@ const byte ARRAY_LEN = 100;
 const char *STATUS_RUNNING = "Wait...";
 const char *STATUS_OK = "        Done!";
 
-// 以 interval(单位：ms) 为间隔测量 times 次，然后取平均值
+// 以 interval(单位：us) 为间隔测量 times 次，然后取平均值
 float getAvgVoltage(byte port, word times, word interval) {
+  getVoltage(port, 3);
   float s = 0;
   for (word i = 0; i < times; ++i) {
     s += getVoltage(port, 1);
-    delay(interval);
+    delayMicroseconds(interval);
   }
   return s / times;
 }
@@ -25,6 +26,7 @@ float getResistance(byte port1, byte port2, float r0) {
 }
 
 void measureResistor(byte port1, byte port2) {
+  Serial.println(9);
   // 这个阈值是计算得到的
   static const float THRESHOLD = 4.8;
 
@@ -107,6 +109,59 @@ void initNPN(byte B, byte C, byte E) {
 }
 
 
+//void measurePNPBJT(byte C, byte B, byte E) {
+//  lcd.clear();
+//  printType("PNP BJT");
+//  printStatus("Trying as PNP");
+//  initPNP(B, C, E, 0);
+//  float vb = getVoltage(B);
+//  float vc = getVoltage(C);
+//  float ic = vc / R_LOW;
+//  float ib = vb / (R_LOW + R_SMALL);
+//  if (vb < 0.01 || vb < vc) {
+//    printStatus("Attaching 470k ohm to B");
+//    initPNP(B, C, E, 1);
+//    vb = getVoltage(B);
+//    vc = getVoltage(C);
+//    ic = vc / R_LOW;
+//    ib = vb / (R_LOW + R_BIG);
+//  }
+//  float ve = getVoltage(E);
+//  float ie = (VCC - ve) / (R_HIGH + R_SMALL);
+//  float beta = ic / ib;
+//  printValue(beta, "beta");
+//  Serial.println(beta);
+//  Serial.println(vb);
+//  Serial.println(vc);
+//  Serial.println(ve);
+//  Serial.println(ib * 1000);
+//  Serial.println(ic * 1000);
+//  Serial.println(ie * 1000);
+//}
+
+void measureNPNBJT(byte C, byte B, byte E) {
+  clearLCD();
+  printLine(0, "NPN BJT");
+  printLine(5, STATUS_RUNNING);
+  refreshLCD();
+  initNPN(B, C, E);
+  float vb = getAvgVoltage(B, 10, 100);
+  float vc = getAvgVoltage(C, 10, 100);
+  float ic = (VCC - vc) / R_SMALL;
+  float ib = (VCC - vb) / R_BIG;
+  float beta = ic / ib;
+  printLine(1, beta);
+  printLine(5, STATUS_OK);
+  refreshLCD();
+//  Serial.println(beta);
+//  Serial.println(vb);
+//  Serial.println(vc);
+//  Serial.println(ve);
+//  Serial.println(ib * 1000);
+//  Serial.println(ic * 1000);
+//  Serial.println(ie * 1000);
+}
+
 
 
 // 返回值：true: 电压下降值可观; false: 电压基本不变
@@ -140,7 +195,7 @@ float getTao(float *vArr, int pointCnt, int interval) {
 }
 
 float getCapacitance(byte port1, byte port2, float r0) {
-  float vArr[ARRAY_LEN];
+  static float vArr[ARRAY_LEN];
   int pointCnt = 50;  // 取点数目
   int interval = 500; // 测量间隔(us)
 
@@ -177,62 +232,13 @@ float getCapacitance2(byte port1, byte port2) {
   return cap;
 }
 
-void measureCapacitor(byte port1, byte port2) {
-  float cap = getCapacitance2(port1, port2);
-
-  printValue(1, cap, "F");
-  printLine(5, "        Done!");
-  refreshLCD();
-}
-
-//void measurePNPBJT(byte C, byte B, byte E) {
-//  lcd.clear();
-//  printType("PNP BJT");
-//  printStatus("Trying as PNP");
-//  initPNP(B, C, E, 0);
-//  float vb = getVoltage(B);
-//  float vc = getVoltage(C);
-//  float ic = vc / R_LOW;
-//  float ib = vb / (R_LOW + R_SMALL);
-//  if (vb < 0.01 || vb < vc) {
-//    printStatus("Attaching 470k ohm to B");
-//    initPNP(B, C, E, 1);
-//    vb = getVoltage(B);
-//    vc = getVoltage(C);
-//    ic = vc / R_LOW;
-//    ib = vb / (R_LOW + R_BIG);
-//  }
-//  float ve = getVoltage(E);
-//  float ie = (VCC - ve) / (R_HIGH + R_SMALL);
-//  float beta = ic / ib;
-//  printValue(beta, "beta");
-//  Serial.println(beta);
-//  Serial.println(vb);
-//  Serial.println(vc);
-//  Serial.println(ve);
-//  Serial.println(ib * 1000);
-//  Serial.println(ic * 1000);
-//  Serial.println(ie * 1000);
-//}
-
-void measureNPNBJT(byte C, byte B, byte E) {
+void measureCapacitor(byte port1, byte port2) {\
   clearLCD();
-  printLine(0, "NPN BJT");
+  printLine(0, "Capacitor");
   printLine(5, STATUS_RUNNING);
-  initNPN(B, C, E);
-  float vb = getVoltage(B, 3);
-  float vc = getVoltage(C, 3);
-  float ic = (VCC - vc) / (R_SMALL + R_HIGH);
-  float ib = (VCC - vb) / (R_HIGH + R_BIG);
-  float ve = getVoltage(E, 3);
-  float ie = ve / R_LOW;
-  float beta = ic / ib;
-  printValue(1, beta, "");
-  Serial.println(beta);
-  Serial.println(vb);
-  Serial.println(vc);
-  Serial.println(ve);
-  Serial.println(ib * 1000);
-  Serial.println(ic * 1000);
-  Serial.println(ie * 1000);
+  refreshLCD();
+  float cap = getCapacitance2(port1, port2);
+  printValue(1, cap, "F");
+  printLine(5, STATUS_OK);
+  refreshLCD();
 }
