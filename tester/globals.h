@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Adafruit_PCD8544.h>
+#include <math.h>
 
 // 可以取0、1、2
 using PortNum = byte;
@@ -8,7 +9,6 @@ using PinNum = byte;
 
 // 用来控制液晶屏
 extern Adafruit_PCD8544 lcd;
-
 
 // 临时测试用
 void setHigh();
@@ -20,7 +20,6 @@ PinNum getPinNum(PortNum port, PortType type);
 extern const float VCC;
 extern const float R_BIG;
 extern const float R_SMALL;
-
 
 // 端口自身的内阻，似乎用不上
 extern const float R_HIGH;
@@ -36,4 +35,6 @@ void setPort(PortNum port, PortType type, byte highOrLow);
 // 让不是 port1 和 port2 的另外一个端口悬空
 void resetOtherPort(PortNum port1, PortNum port2);
 // 获得电压，测量 times 次，取最后一次的结果
-float getVoltage(PortNum port, byte times=1);
+float getVoltage(PortNum port, byte times = 1);
+// 设置port口电压（需要支持PWM的口）
+void setVoltage(PinNum pin, float voltage);
