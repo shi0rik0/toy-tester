@@ -28,9 +28,12 @@ const char *const PREFIXES_SMALL[NUM_PREFIXES_SMALL] = {"m", "u", "n", "p"};
 const byte NUM_PREFIXES_BIG = 2;
 const char *const PREFIXES_BIG[NUM_PREFIXES_BIG] = {"k", "M"};
 
-void printValue(byte row, float val, const char *unit) {
+void printValue(byte row, const char *description, float val, const char *unit) {
   goToLine(row);
   clearLine(row);
+
+  lcd.print(description);
+  lcd.print("=");
   const char *prefix = "";
   if (val < 1) {
     val *= 1000;
@@ -39,7 +42,7 @@ void printValue(byte row, float val, const char *unit) {
       val *= 1000;
       i += 1;
       if (i == NUM_PREFIXES_SMALL) {
-        lcd.print("0 ");
+        lcd.print("0");
         lcd.print(unit);
         lcd.display();
         return;
@@ -53,7 +56,7 @@ void printValue(byte row, float val, const char *unit) {
       val /= 1000;
       i += 1;
       if (i == NUM_PREFIXES_BIG) {
-        lcd.print("Inf ");
+        lcd.print("Inf");
         lcd.print(unit);
         lcd.display();
         return;
@@ -62,7 +65,6 @@ void printValue(byte row, float val, const char *unit) {
     prefix = PREFIXES_BIG[i];
   }
   lcd.print(val);
-  lcd.print(' ');
   lcd.print(prefix);
   lcd.print(unit);
 }

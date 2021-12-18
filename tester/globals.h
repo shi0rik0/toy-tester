@@ -10,6 +10,8 @@ using PinNum = byte;
 extern Adafruit_PCD8544 lcd;
 
 
+// 临时测试用
+void setHigh();
 
 enum class PortType { SMALL = 0, BIG = 1, READ = 2 };
 PinNum getPinNum(PortNum port, PortType type);
@@ -24,6 +26,8 @@ extern const float R_SMALL;
 extern const float R_HIGH;
 extern const float R_LOW;
 
+// 采样一次所用时间(us)，实测得到
+const word READ_TIME = 112;
 
 // 让 port 的三个引脚全部悬空
 void resetPort(PortNum port);
@@ -32,4 +36,4 @@ void setPort(PortNum port, PortType type, byte highOrLow);
 // 让不是 port1 和 port2 的另外一个端口悬空
 void resetOtherPort(PortNum port1, PortNum port2);
 // 获得电压，测量 times 次，取最后一次的结果
-float getVoltage(PortNum port, byte times);
+float getVoltage(PortNum port, byte times=1);

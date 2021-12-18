@@ -28,9 +28,9 @@ void safeDischarge() {
 // type: 使用什么种类的电阻
 // maxDelay: 最多等待多久(ms)
 Connectivity getConnectivity(PortNum port1, PortNum port2, PortType type, word maxDelay) {
-  static const float THRESHOLD_LOW = 0.1;
-  static const float THRESHOLD_HIGH = 4.9;
-  static const float CAPACITOR_THRESHOLD = 0.1;
+  static const float THRESHOLD_LOW = 0.2;
+  static const float THRESHOLD_HIGH = 4.8;
+  static const float CAPACITOR_THRESHOLD = 0.2;
 
   safeDischarge();
   resetOtherPort(port1, port2);

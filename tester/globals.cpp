@@ -1,23 +1,23 @@
 #include "globals.h"
 
-// pin 3 - Serial clock out (SCLK)
-// pin 4 - Serial data out (DIN)
-// pin 5 - Data/Command select (D/C)
-// pin 7 - LCD chip select (CS)
-// pin 6 - LCD reset (RST)
-Adafruit_PCD8544 lcd(3, 4, 5, 7, 6);
+// pin 12 - Serial clock out (SCLK)
+// pin 11 - Serial data out (DIN)
+// pin 10 - Data/Command select (D/C)
+// pin 9 - LCD chip select (CS)
+// pin 8 - LCD reset (RST)
+Adafruit_PCD8544 lcd(12, 11, 10, 9, 8);
 
 
 // 以下是引脚定义，SMALL表示小电阻，BIG表示大电阻，READ表示模拟输入
-const PinNum SMALL_1 = 8;
-const PinNum BIG_1 = 9;
-const PinNum READ_1 = A2;
-const PinNum SMALL_2 = 10;
-const PinNum BIG_2 = 11;
-const PinNum READ_2 = A1;
-const PinNum SMALL_3 = 12;
-const PinNum BIG_3 = 13;
-const PinNum READ_3 = A0;
+const PinNum SMALL_1 = 2;
+const PinNum BIG_1 = 3;
+const PinNum READ_1 = A5;
+const PinNum SMALL_2 = 4;
+const PinNum BIG_2 = 5;
+const PinNum READ_2 = A3;
+const PinNum SMALL_3 = 6;
+const PinNum BIG_3 = 7;
+const PinNum READ_3 = A1;
 
 const PinNum PORT[3][3] = {
     {SMALL_1, BIG_1, READ_1},
@@ -26,8 +26,8 @@ const PinNum PORT[3][3] = {
 };
 
 const float VCC = 5;
-const float R_BIG = 470e3;
-const float R_SMALL = 680;
+const float R_BIG = 100e3;
+const float R_SMALL = 510;
 
 
 // 端口自身的内阻，似乎用不上
@@ -55,6 +55,28 @@ void setPort(PortNum port, PortType type, byte highOrLow) {
       pinMode(PORT[port][i], INPUT);
     }
   }
+}
+
+void setHigh() {
+//  for (byte i = 0; i < 3; ++i) {
+//    for (byte j = 0; j < 3; ++j) {
+//      pinMode(PORT[i][j], OUTPUT);
+//      digitalWrite(PORT[i][j], HIGH);
+//      getVoltage(i, 3);
+//    }
+//  }
+//  delay(100);
+//  for (byte i = 0; i < 3; ++i) {
+//    for (byte j = 0; j < 3; ++j) {
+//      resetOtherPort(i, j);
+//      setPort(i, PortType::BIG, LOW);
+//      setPort(j, PortType::READ, HIGH);
+//      for (word i = 0; i < 1000; ++i) {
+//        getVoltage(i, 1);
+//        getVoltage(j, 1);
+//      }
+//    }
+//  }
 }
 
 

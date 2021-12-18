@@ -16,4 +16,4 @@ void printLine(byte row, const T &x) {
   lcd.print(x);
 }
 
-void printValue(byte row, float val, const char *unit);
+void printValue(byte row, const char *descrption, float val, const char *unit);

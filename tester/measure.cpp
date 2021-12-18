@@ -1,5 +1,6 @@
 #include "measure.h"
 #include "draw.h"
+#include "identify.h"
 
 #include <math.h>
 
@@ -26,7 +27,6 @@ float getResistance(byte port1, byte port2, float r0) {
 }
 
 void measureResistor(byte port1, byte port2) {
-  Serial.println(9);
   // 这个阈值是计算得到的
   static const float THRESHOLD = 4.8;
 
@@ -44,7 +44,7 @@ void measureResistor(byte port1, byte port2) {
     setPort(port1, PortType::SMALL, LOW);
   }
   float r = getResistance(port1, port2, r0);
-  printValue(1, r, "Ohm");
+  printValue(1, "R", r, "Ohm");
   printLine(5, STATUS_OK);
   refreshLCD();
 }
@@ -139,20 +139,16 @@ void initNPN(byte B, byte C, byte E) {
 //  Serial.println(ie * 1000);
 //}
 
-void measureNPNBJT(byte C, byte B, byte E) {
-  clearLCD();
-  printLine(0, "NPN BJT");
-  printLine(5, STATUS_RUNNING);
-  refreshLCD();
+// 函数名字到时候再改
+float measureNPNBJT2(byte C, byte B, byte E) {
+  
   initNPN(B, C, E);
   float vb = getAvgVoltage(B, 10, 100);
   float vc = getAvgVoltage(C, 10, 100);
   float ic = (VCC - vc) / R_SMALL;
   float ib = (VCC - vb) / R_BIG;
   float beta = ic / ib;
-  printLine(1, beta);
-  printLine(5, STATUS_OK);
-  refreshLCD();
+  return beta;
 //  Serial.println(beta);
 //  Serial.println(vb);
 //  Serial.println(vc);
@@ -163,82 +159,165 @@ void measureNPNBJT(byte C, byte B, byte E) {
 }
 
 
-
-// 返回值：true: 电压下降值可观; false: 电压基本不变
-bool recordVoltages(float *vArr, byte port1, int cnt, int interval) {
-  float THRESH = 0.5;
-  for (int i = 0; i < cnt; ++i) {
-    vArr[i] = getVoltage(port1, 1);
-    delayMicroseconds(interval);
-  }
-  return (vArr[0] - vArr[cnt - 1] > THRESH);
-}
-
-float getTao(float *vArr, int pointCnt, int interval) {
-  const float THRESH = 0.1; // 电压为0的阈值
-  float tao = -1;
-  float sumTao = 0;
-  int validCnt = 0;
-  const float validThresh = 0.01;
-  // V = Vcc * e ** (-t / tao)
-  for (int i = 1; i < pointCnt; ++i) { // 计算tao平均值
-    float t = i * interval * 1e-6;
-    float logDiff = log(VCC) - log(vArr[i]);
-    if (abs(logDiff) > validThresh) { // 如果电压接近0 就不计入
-      sumTao += (t / logDiff);
-      ++validCnt;
-      ;
-    }
-  }
-
-  return sumTao / (float)(validCnt);
-}
-
-float getCapacitance(byte port1, byte port2, float r0) {
-  static float vArr[ARRAY_LEN];
-  int pointCnt = 50;  // 取点数目
-  int interval = 500; // 测量间隔(us)
-
-  if (!recordVoltages(vArr, port1, pointCnt, interval)) {
-    return -1;
-  }
-  float tao = getTao(vArr, pointCnt, interval);
-  return tao / r0; // tao = RC
+void measureNPNBJT(byte C, byte B, byte E) {
+  clearLCD();
+  printLine(0, "NPN BJT");
+  printLine(5, STATUS_RUNNING);
+  refreshLCD();
+  float beta1 = measureNPNBJT2(C, B, E);
+  setHigh();
+  float beta2 = measureNPNBJT2(E, B, C);
+  printValue(1, "beta", max(beta1, beta2), "");
+  printLine(5, STATUS_OK);
+  refreshLCD();
 }
 
 
+//// 返回值：true: 电压下降值可观; false: 电压基本不变
+//bool recordVoltages(float *vArr, byte port1, int cnt, int interval) {
+//  float THRESH = 0.5;
+//  for (int i = 0; i < cnt; ++i) {
+//    vArr[i] = getVoltage(port1, 1);
+////    Serial.println(vArr[i]);
+//    delayMicroseconds(interval);
+//  }
+//  return (vArr[0] - vArr[cnt - 1] > THRESH);
+//}
+//
+//float getTao(float *vArr, int pointCnt, int interval) {
+//  const float THRESH = 0.1; // 电压为0的阈值
+//  float tao = -1;
+//  float sumTao = 0;
+//  int validCnt = 0;
+//  const float validThresh = 0.01;
+//  // V = Vcc * e ** (-t / tao)
+//  for (int i = 1; i < pointCnt; ++i) { // 计算tao平均值
+//    float t = i * interval * 1e-6;
+//    float logDiff = log(VCC) - log(vArr[i]);
+//    if (abs(logDiff) > validThresh) { // 如果电压接近0 就不计入
+//      sumTao += (t / logDiff);
+//      ++validCnt;
+//      ;
+//    }
+//  }
+//
+//  return sumTao / (float)(validCnt);
+//}
+//
+//float getCapacitance(byte port1, byte port2, float r0) {
+//  static float vArr[ARRAY_LEN];
+//  int pointCnt = 50;  // 取点数目
+//  int interval = 10; // 测量间隔(us)
+//
+//  if (!recordVoltages(vArr, port1, pointCnt, interval)) {
+//    return -1;
+//  }
+//  float tao = getTao(vArr, pointCnt, interval + 20);
+//  return tao / r0; // tao = RC
+//}
 
 
-// 这个函数丑了点，一会儿再改
+
+//
+//// 这个函数丑了点，一会儿再改
+//float getCapacitance2(byte port1, byte port2) {
+//
+//  const word dischargeTime = 10; // 单位ms. 这个时间怎么确定的？
+//  //  printType("Capacitor");
+//  //  printDebug("Small");
+//  float cap;
+//  switchToBigResistor(port1, port2); // 开始充电
+//  dischargeByBigResistor(port1, port2, dischargeTime);
+//  switchToBigResistor(port1, port2);
+//  cap = getCapacitance(port1, port2, R_BIG);
+//  dischargeByBigResistor(port1, port2, dischargeTime); //  电容放电
+//
+//
+//  if (cap < 0) {
+//    //    printDebug("Big");
+//    switchToSmallResistor(port1, port2); // 开始充电
+//    dischargeByBigResistor(port1, port2, dischargeTime);
+//    switchToBigResistor(port1, port2); // 开始充电
+//  
+//    cap = getCapacitance(port1, port2, R_SMALL);
+//    dischargeBySmallResistor(port1, port2, dischargeTime); //  电容放电
+//  }
+//  return cap;
+//}
+
+
 float getCapacitance2(byte port1, byte port2) {
-  static const word DISCHARGE_TIME_BIG = 100;
-  static const word DISCHARGE_TIME_SMALL = 100;
+  static const float THRESHOLD_1 = 2.0;
+  static const float THRESHOLD_2 = 3.0;
+  resetPort(port2);
+  setPort(port1, PortType::BIG, HIGH);
+  setPort(port2, PortType::READ, LOW);
+//  float v1;
+//  unsigned long time1;
+//  float v2 = getVoltage(port1);
+//  unsigned long time2 = micros();
+//  do {
+//    v1 = v2;
+//    time1 = time2;
+//    v2 = getVoltage(port1);
+//    time2 = micros();
+//    Serial.println(time2);
+//    Serial.println(v2);
+//  } while (v2 < THRESHOLD);
 
-  const word dischargeTime = 1000; // 这个时间怎么确定的？
-  lcd.clearDisplay();
-  //  printType("Capacitor");
-  //  printDebug("Small");
-  float cap;
-  switchToBigResistor(port1, port2); // 开始充电
-  cap = getCapacitance(port1, port2, R_BIG);
-  dischargeByBigResistor(port1, port2, dischargeTime); //  电容放电
+//  bool v1_recorded = false;
+//  float v1, v2;
+//  unsigned long time1, time2;
+//  for (;;) {
+//    float v = getVoltage(port1);
+//    if (v > THRESHOLD_2) {
+//      v2 = v;
+//      time2 = micros();
+//      break;
+//    } else if (!v1_recorded && v > THRESHOLD_1) {
+//      v1 = v;
+//      time1 = micros();
+//      v1_recorded = true;
+//    }
+//  }
+//      Serial.println(time1);
+//    Serial.println(v1);
+//    Serial.println(time2);
+//    Serial.println(v2);
+//  float tao = (time2 - time1) * 1e-6 / log(v2 / v1);
+//  float cap = tao / R_BIG;
+//  Serial.println(cap * 1e9);
+//  return cap;
 
-  if (cap < 0) {
-    //    printDebug("Big");
-    switchToSmallResistor(port1, port2); // 开始充电
-    cap = getCapacitance(port1, port2, R_SMALL);
-    dischargeBySmallResistor(port1, port2, dischargeTime); //  电容放电
+  int count = 0;
+  for (;;) {
+    float v = getVoltage(port1);
+    if (v > 4) {
+      break;
+    }
+    ++count;
   }
+  float tao = count * READ_TIME * 1e-6 / log(5);
+  float cap = tao / R_BIG * 1.38; // 实验测出来的常数
+  Serial.println(cap * 1e9);
   return cap;
 }
 
-void measureCapacitor(byte port1, byte port2) {\
+void measureDiode(byte portPos, byte portNeg) {
+  setPort(portPos, PortType::BIG, HIGH);
+  setPort(portNeg, PortType::READ, LOW);
+  delay(10);
+  float v = getVoltage(portPos);
+  Serial.println(v);
+}
+
+void measureCapacitor(byte port1, byte port2) {
   clearLCD();
   printLine(0, "Capacitor");
   printLine(5, STATUS_RUNNING);
   refreshLCD();
   float cap = getCapacitance2(port1, port2);
-  printValue(1, cap, "F");
+  printValue(1, "C", cap, "F");
   printLine(5, STATUS_OK);
   refreshLCD();
 }
