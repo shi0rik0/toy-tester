@@ -38,3 +38,9 @@ void resetOtherPort(PortNum port1, PortNum port2);
 float getVoltage(PortNum port, byte times = 1);
 // 设置port口电压（需要支持PWM的口）
 void setVoltage(PinNum pin, float voltage);
+
+enum class ButtonPressed {
+  NONE, SHORT, LONG
+};
+
+ButtonPressed getButtonStatus();

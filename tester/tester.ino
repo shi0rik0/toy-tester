@@ -7,6 +7,10 @@ void setup() {
   Serial.begin(9600);
   initLCD();
 
+//  pinMode(A0, OUTPUT);
+//  digitalWrite(A0, HIGH);
+//  delay(10);
+//  Serial.println(analogRead(A3));
 }
 
 void loop() {
@@ -16,6 +20,7 @@ void loop() {
 //    analogRead(A1);
 //  }
 //  Serial.println(millis() - t);
+
   ComponentInfo info = getComponentInfo();
   if (info.type == ComponentType::RESISTOR) {
     ResistorInfo &r = info.info.resistor;
@@ -41,6 +46,11 @@ void loop() {
     printLine(2, "tected.");
     refreshLCD();
   }
-
-  delay(2000);
+  
+//  ButtonPressed b = getButtonStatus();
+//  if (b == ButtonPressed::SHORT) {
+//    Serial.println("SHORT");
+//  } else if (b == ButtonPressed::LONG) {
+//    Serial.println("LONG");
+//  }
 }

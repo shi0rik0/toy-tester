@@ -11,19 +11,21 @@ Adafruit_PCD8544 lcd(12, 11, 10, 9, 8);
 
 // 这里的9, 10, 11 可以挪到A3, A4, A5, ADC口支持digitalWrite()
 const PinNum SMALL_1 = 2;
-const PinNum BIG_1 = 3;
+const PinNum BIG_1 = A2;
 const PinNum READ_1 = A5;
 const PinNum SMALL_2 = 4;
-const PinNum BIG_2 = 5;
-const PinNum READ_2 = A3;
-const PinNum SMALL_3 = 6;
-const PinNum BIG_3 = 7;
-const PinNum READ_3 = A1;
+const PinNum BIG_2 = A1;
+const PinNum READ_2 = A4;
+const PinNum SMALL_3 = 7;
+const PinNum BIG_3 = A0;
+const PinNum READ_3 = A3;
 // 这三个（可能只需要两个）引脚必须要PWM
 // 只能是 3, 5, 6, 9, 10, 11
-const PinNum WRITE_1 = -1;
-const PinNum WRITE_2 = -1;
-const PinNum WRITE_3 = -1;
+const PinNum WRITE_1 = 3;
+const PinNum WRITE_2 = 5;
+const PinNum WRITE_3 = 6;
+// 按钮的引脚
+const PinNum BUTTON = A7;
 
 const PinNum PORT[3][3] = {
     {SMALL_1, BIG_1, READ_1},
@@ -119,4 +121,39 @@ int voltageToPWM(float voltage) {
 }
 void setVoltage(PinNum pin, float voltage) {
   analogWrite(pin, voltageToPWM(voltage));
+}
+
+
+const word THRESHOLD = 512;
+const word DELAY = 10; // ms
+
+void waitButtonDown() {
+  word v = analogRead(BUTTON);
+  if (v > THRESHOLD) {
+    delay(DELAY);
+    do {
+      v = analogRead(BUTTON);
+    } while (v > THRESHOLD);
+  }
+  delay(DELAY);
+  do {
+    v = analogRead(BUTTON);
+  } while (v < THRESHOLD);
+}
+
+ButtonPressed getButtonStatus() {
+  static const word LONG_THRESHOLD = 1000; // ms
+  word v = analogRead(BUTTON);
+  if (v < THRESHOLD) {
+    return ButtonPressed::NONE;
+  }
+  unsigned long t = millis();
+  delay(DELAY);
+  while (millis() - t < LONG_THRESHOLD) {
+    v = analogRead(BUTTON);
+    if (v < THRESHOLD) {
+      return ButtonPressed::SHORT;
+    }
+  }
+  return ButtonPressed::LONG;
 }
