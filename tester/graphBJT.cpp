@@ -65,6 +65,9 @@ void graphNPN1(dataset points, PinNum pinC, PinNum pinB, PinNum pinE, PortNum po
 
 // E 接地, Uc > Ub
 void graphNPN(PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum portB, PortNum portE){
+  clearLCD();
+  printLine(0, "Plotting...");
+  refreshLCD();
     // 其他三个口用来测电压
     //resetPort(0); resetPort(1); resetPort(2);
     // 启用三个pin
@@ -90,6 +93,4 @@ void graphNPN(PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum port
     pinMode(pinB,INPUT);
     pinMode(pinC,INPUT);
     pinMode(pinE,INPUT);
-    delay(60000);
-    clearLCD();
 }

@@ -224,6 +224,18 @@ void measureNPNBJT(byte B, byte C, byte E) {
 void measurePNPBJT(byte B, byte C, byte E) {
   clearLCD();
   printLine(0, "PNP-BJT");
+  goToLine(1);
+  clearLine(1);
+  lcd.print("B: ");
+  lcd.print(getPortAlphabet(B));
+  goToLine(2);
+  clearLine(2);
+  lcd.print("C: ");
+  lcd.print(getPortAlphabet(C));
+  goToLine(3);
+  clearLine(3);
+  lcd.print("E: ");
+  lcd.print(getPortAlphabet(E));
   printLine(5, STATUS_RUNNING);
   refreshLCD();
   float beta = getBetaPNP(B, C, E);
