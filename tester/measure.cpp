@@ -193,7 +193,8 @@ float getBetaNPN(byte B, byte C, byte E) {
 //}
 
 const char *getPortAlphabet(PortNum p) {
-  static const char* const STR[] = {""};
+  static const char* const STR[] = {"X", "Y", "Z"};
+  return STR[p];
 }
 
 
@@ -203,6 +204,15 @@ void measureNPNBJT(byte B, byte C, byte E) {
   goToLine(1);
   clearLine(1);
   lcd.print("B: ");
+  lcd.print(getPortAlphabet(B));
+  goToLine(2);
+  clearLine(2);
+  lcd.print("C: ");
+  lcd.print(getPortAlphabet(C));
+  goToLine(3);
+  clearLine(3);
+  lcd.print("E: ");
+  lcd.print(getPortAlphabet(E));
   printLine(5, STATUS_RUNNING);
   refreshLCD();
   float beta = getBetaNPN(B, C, E);
@@ -355,11 +365,26 @@ float getCapacitance2(byte port1, byte port2) {
 }
 
 void measureDiode(byte portPos, byte portNeg) {
+  clearLCD();
+  printLine(0, "Capacitor");
+  printLine(5, STATUS_RUNNING);
+  refreshLCD();
   setPort(portPos, PortType::BIG, HIGH);
   setPort(portNeg, PortType::READ, LOW);
   delay(10);
   float v = getVoltage(portPos);
-  Serial.println(v);
+  goToLine(1);
+  clearLine(1);
+  lcd.print("+: ");
+  lcd.print(getPortAlphabet(portPos));
+  goToLine(2);
+  clearLine(2);
+  lcd.print("-: ");
+  lcd.print(getPortAlphabet(portNeg));
+  printValue(3, "Vf", v, "V");
+  printLine(5, STATUS_OK);
+  refreshLCD();
+  
 }
 
 void measureCapacitor(byte port1, byte port2) {

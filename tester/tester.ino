@@ -13,14 +13,7 @@ void setup() {
   //  Serial.println(analogRead(A3));
 }
 
-void loop() {
-
-  //  unsigned long t = millis();
-  //  for (int i = 0; i < 10000; ++i) {
-  //    analogRead(A1);
-  //  }
-  //  Serial.println(millis() - t);
-
+void measure() {
   // 这个地方用 switch 不行，不知道为什么
   ComponentInfo info = getComponentInfo();
   if (info.type == ComponentType::RESISTOR) {
@@ -47,6 +40,25 @@ void loop() {
     printLine(2, "tected.");
     refreshLCD();
   }
+}
+
+
+void loop() {
+
+  //  unsigned long t = millis();
+  //  for (int i = 0; i < 10000; ++i) {
+  //    analogRead(A1);
+  //  }
+  //  Serial.println(millis() - t);
+  for (;;) {
+    ButtonPressed b = getButtonStatus();
+    if (b == ButtonPressed::SHORT) {
+      measure();
+    } else if (b == ButtonPressed::LONG) {
+      
+    }
+  }
+  
 
   //  ButtonPressed b = getButtonStatus();
   //  if (b == ButtonPressed::SHORT) {
