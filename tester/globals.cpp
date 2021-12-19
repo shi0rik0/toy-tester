@@ -1,11 +1,11 @@
 #include "globals.h"
 
 // pin 12 - Serial clock out (SCLK)
-// pin 11 - Serial data out (DIN)
-// pin 10 - Data/Command select (D/C)
-// pin 9 - LCD chip select (CS)
-// pin 8 - LCD reset (RST)
-Adafruit_PCD8544 lcd(12, 11, 10, 9, 8);
+// pin 8 - Serial data out (DIN)
+// pin 7 - Data/Command select (D/C)
+// pin 6 - LCD chip select (CS)
+// pin 5 - LCD reset (RST)
+Adafruit_PCD8544 lcd(12, 8, 7, 6, 5);
 
 // 以下是引脚定义，SMALL表示小电阻，BIG表示大电阻，READ表示模拟输入
 
@@ -13,17 +13,17 @@ Adafruit_PCD8544 lcd(12, 11, 10, 9, 8);
 const PinNum SMALL_1 = 2;
 const PinNum BIG_1 = A2;
 const PinNum READ_1 = A5;
-const PinNum SMALL_2 = 4;
+const PinNum SMALL_2 = 3;
 const PinNum BIG_2 = A1;
 const PinNum READ_2 = A4;
-const PinNum SMALL_3 = 7;
+const PinNum SMALL_3 = 4;
 const PinNum BIG_3 = A0;
 const PinNum READ_3 = A3;
 // 这三个（可能只需要两个）引脚必须要PWM
 // 只能是 3, 5, 6, 9, 10, 11
-const PinNum WRITE_1 = 3;
-const PinNum WRITE_2 = 5;
-const PinNum WRITE_3 = 6;
+const PinNum WRITE_1 = 9;
+const PinNum WRITE_2 = 10;
+const PinNum WRITE_3 = 11;
 // 按钮的引脚
 const PinNum BUTTON = A7;
 
