@@ -39,10 +39,12 @@ void drawGraph(float *X, float *Y, float xMin, float xMax, float yMin, float yMa
   for(int i = 0; i < len; ++i){
     int x = round(__fmap(X[i], xMin, xMax, 0, LCD_WIDTH - 1));
     int y = round(__fmap(Y[i], yMin, yMax , 0, LCD_HEIGHT - 1));
+    /*
     Serial.print(__fmap(X[i], xMin, xMax, 0, LCD_WIDTH - 1));
     Serial.print(' ');
     Serial.print(__fmap(Y[i], yMin, yMax , 0, LCD_HEIGHT - 1));
     Serial.print('\n');
+    */
     _setPixel(x, y , BLACK);
     if(i == 0){
       px = x;

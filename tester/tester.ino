@@ -2,7 +2,7 @@
 #include "identify.h"
 #include "draw.h"
 #include "measure.h"
-
+#include "graphBJT.h"
 void setup() {
   Serial.begin(9600);
   initLCD();
@@ -22,7 +22,7 @@ void loop() {
 //  Serial.println(millis() - t);
 
   ComponentInfo info = getComponentInfo();
-  if (info.type == ComponentType::RESISTOR) {
+  if (info.type == ComponentType::RESISTOR) { 
     ResistorInfo &r = info.info.resistor;
     measureResistor(r.port1, r.port2);
   }
@@ -36,6 +36,13 @@ void loop() {
     BJTInfo &b = info.info.bjt;
     if (b.type == BJTType::NPN) {
       measureNPNBJT(b.ce1, b.b, b.ce2);
+      
+      Serial.print(b.ce1); 
+      Serial.print(b.b);
+      Serial.print(b.ce2);
+      Serial.println("");
+      // C B E
+      graphNPN(WRITE_3, WRITE_2, WRITE_1, b.ce1, b.b, b.ce2);
     } else {
       //        measurePNPBJT(b.ce1, b.b, b.ce2);
     }
@@ -46,6 +53,8 @@ void loop() {
     printLine(2, "tected.");
     refreshLCD();
   }
+
+  delay(1000);
   
 //  ButtonPressed b = getButtonStatus();
 //  if (b == ButtonPressed::SHORT) {

@@ -25,6 +25,10 @@ extern const float R_SMALL;
 extern const float R_HIGH;
 extern const float R_LOW;
 
+extern const PinNum WRITE_1;
+extern const PinNum WRITE_2;
+extern const PinNum WRITE_3;
+
 // 采样一次所用时间(us)，实测得到
 const word READ_TIME = 112;
 

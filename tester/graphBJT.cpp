@@ -1,14 +1,14 @@
 #include "globals.h"
 #include "mygraph.h"
 #include "graphBJT.h"
-
+#include "measure.h"
 // 输出曲线上有几个Ib
-const int IB_CNT = 2;
+const int IB_CNT = 1;
 // 一次测试的测试点数量
 const int TEST_CNT = 42;
-const float ibs[IB_CNT] = {20e-6, 40e-6};
+const float ibs[IB_CNT] = {20e-6};
 const float R_B = 1e5;
-const float R_C = 1e5;
+const float R_C = 51;
 
 struct dataset
 {
@@ -22,30 +22,55 @@ float getUbe(PortNum portB, PortNum portE) {
     return 0.7;
 }
 
-void graphNPN1(dataset points, PinNum pinB, PinNum pinC, PinNum pinE, PortNum portB, PortNum portC, PortNum portE, float targetIb){
+void graphNPN1(dataset points, PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum portB, PortNum portE, float targetIb){
     float Ube = getUbe(portB, portE);
     float Vbb = targetIb * R_B + Ube;
     setVoltage(pinB, Vbb);
     setVoltage(pinE, 0);
     float VcoStep = VCC / (float)points.len; // 均匀取Vco
+    
     float Vco = 0.0;
     for(int i = 0; i < points.len; ++i){
         setVoltage(pinC, Vco);
-        float Uce = getVoltage(portC, 5);
+        //float Uce = getAvgVoltage(portC,1000,10);
+        float Uce = getAvgVoltage(portC,1000,10);
+        float BBB = getAvgVoltage(portB,1000,10);
+        float EEE = getAvgVoltage(portE,1000,10);
         points.x[i] = Uce;  // Uce
         points.y[i] = (Vco - Uce) / R_C; // Ic
+
+        Serial.print("Vco:");
+        Serial.print(Vco);
+        Serial.print("\n");
+        
+        Serial.print("Uce:");
+        Serial.print(Uce);
+        Serial.print("\n");
+
+        Serial.print("BBB:");
+        Serial.print(BBB);
+        Serial.print("\n");
+
+
+        Serial.print("EEE:");
+        Serial.print(EEE);
+        Serial.print("\n");
+        Vco += VcoStep;
+        delay(5000);
     }
 }
 
 // E 接地, Uc > Ub
-void graphNPN(PinNum pinB, PinNum pinC, PinNum pinE, PortNum portB, PortNum portC, PortNum portE){
+void graphNPN(PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum portB, PortNum portE){
     // 其他三个口用来测电压
-    resetPort(0); resetPort(1); resetPort(2);
+    //resetPort(0); resetPort(1); resetPort(2);
     // 启用三个pin
     pinMode(pinB,OUTPUT);
     pinMode(pinC,OUTPUT);
     pinMode(pinE,OUTPUT);
-
+    resetPort(portC);
+    resetPort(portB);
+    resetPort(portE);
     float x[TEST_CNT], y[TEST_CNT];
     const float UceMax = 3.0, IcMax = 0.01; // 画图坐标轴的上限
     for(int i = 0; i < IB_CNT; ++i){
