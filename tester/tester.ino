@@ -7,20 +7,21 @@ void setup() {
   Serial.begin(9600);
   initLCD();
 
-//  pinMode(A0, OUTPUT);
-//  digitalWrite(A0, HIGH);
-//  delay(10);
-//  Serial.println(analogRead(A3));
+  //  pinMode(A0, OUTPUT);
+  //  digitalWrite(A0, HIGH);
+  //  delay(10);
+  //  Serial.println(analogRead(A3));
 }
 
 void loop() {
-  
-//  unsigned long t = millis();
-//  for (int i = 0; i < 10000; ++i) {
-//    analogRead(A1);
-//  }
-//  Serial.println(millis() - t);
 
+  //  unsigned long t = millis();
+  //  for (int i = 0; i < 10000; ++i) {
+  //    analogRead(A1);
+  //  }
+  //  Serial.println(millis() - t);
+
+  // 这个地方用 switch 不行，不知道为什么
   ComponentInfo info = getComponentInfo();
   if (info.type == ComponentType::RESISTOR) {
     ResistorInfo &r = info.info.resistor;
@@ -31,13 +32,13 @@ void loop() {
     measureCapacitor(c.port1, c.port2);
   } else if (info.type == ComponentType::DIODE) {
     DiodeInfo &d = info.info.diode;
-     measureDiode(d.portPos, d.portNeg);
+    measureDiode(d.portPos, d.portNeg);
   } else if (info.type == ComponentType::BJT) {
     BJTInfo &b = info.info.bjt;
     if (b.type == BJTType::NPN) {
       measureNPNBJT(b.ce1, b.b, b.ce2);
     } else {
-      //        measurePNPBJT(b.ce1, b.b, b.ce2);
+      measurePNPBJT(b.ce1, b.b, b.ce2);
     }
   } else {
     clearLCD();
@@ -46,11 +47,11 @@ void loop() {
     printLine(2, "tected.");
     refreshLCD();
   }
-  
-//  ButtonPressed b = getButtonStatus();
-//  if (b == ButtonPressed::SHORT) {
-//    Serial.println("SHORT");
-//  } else if (b == ButtonPressed::LONG) {
-//    Serial.println("LONG");
-//  }
+
+  //  ButtonPressed b = getButtonStatus();
+  //  if (b == ButtonPressed::SHORT) {
+  //    Serial.println("SHORT");
+  //  } else if (b == ButtonPressed::LONG) {
+  //    Serial.println("LONG");
+  //  }
 }
