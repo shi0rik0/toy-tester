@@ -1,4 +1,3 @@
-#include "measure.h"
 #include "draw.h"
 #include "identify.h"
 
@@ -102,6 +101,13 @@ void dischargeByBigResistor(byte port1, byte port2, word dischargeTime) {
 //}
 //
 
+void initPNP(byte B, byte C, byte E) {
+  setPort(B, PortType::BIG, LOW);
+  setPort(C, PortType::SMALL, LOW);
+  setPort(E, PortType::READ, HIGH);
+}
+
+
 void initNPN(byte B, byte C, byte E) {
   setPort(B, PortType::BIG, HIGH);
   setPort(C, PortType::SMALL, HIGH);
@@ -109,7 +115,7 @@ void initNPN(byte B, byte C, byte E) {
 }
 
 
-//void measurePNPBJT(byte C, byte B, byte E) {
+//float getBetaPNP(byte C, byte B, byte E) {
 //  lcd.clear();
 //  printType("PNP BJT");
 //  printStatus("Trying as PNP");
@@ -139,9 +145,17 @@ void initNPN(byte B, byte C, byte E) {
 //  Serial.println(ie * 1000);
 //}
 
-// 函数名字到时候再改
-float measureNPNBJT2(byte C, byte B, byte E) {
-  
+float getBetaPNP(byte B, byte C, byte E) {
+  initPNP(B, C, E);
+  float vb = getAvgVoltage(B, 10, 100);
+  float vc = getAvgVoltage(C, 10, 100);
+  float ic = vc / R_SMALL;
+  float ib = vb / R_BIG;
+  float beta = ic / ib;
+  return beta;
+}
+
+float getBetaNPN(byte B, byte C, byte E) {
   initNPN(B, C, E);
   float vb = getAvgVoltage(B, 10, 100);
   float vc = getAvgVoltage(C, 10, 100);
@@ -149,25 +163,62 @@ float measureNPNBJT2(byte C, byte B, byte E) {
   float ib = (VCC - vb) / R_BIG;
   float beta = ic / ib;
   return beta;
-//  Serial.println(beta);
-//  Serial.println(vb);
-//  Serial.println(vc);
-//  Serial.println(ve);
-//  Serial.println(ib * 1000);
-//  Serial.println(ic * 1000);
-//  Serial.println(ie * 1000);
 }
 
 
-void measureNPNBJT(byte C, byte B, byte E) {
+//void measureNPNBJT(byte B, byte C, byte E) {
+//  clearLCD();
+//  printLine(0, "NPN-BJT");
+//  printLine(5, STATUS_RUNNING);
+//  refreshLCD();
+//  float beta1 = getBetaNPN(B, C, E);
+//  float beta2 = getBetaNPN(B, E, C);
+//  printValue(1, "beta", max(beta1, beta2), "");
+//  printLine(5, STATUS_OK);
+//  refreshLCD();
+//}
+
+//void measurePNPBJT(byte C, byte B, byte E) {
+//  clearLCD();
+//  printLine(0, "PNP-BJT");
+//  printLine(5, STATUS_RUNNING);
+//  refreshLCD();
+//  float beta1 = getBetaPNP(B, C, E);
+//  float beta2 = getBetaPNP(B, E, C);
+//  Serial.println(beta1);
+//  Serial.println(beta2); 
+//  printValue(1, "beta", max(beta1, beta2), "");
+//  printLine(5, STATUS_OK);
+//  refreshLCD();
+//}
+
+const char *getPortAlphabet(PortNum p) {
+  static const char* const STR[] = {""};
+}
+
+
+void measureNPNBJT(byte B, byte C, byte E) {
   clearLCD();
-  printLine(0, "NPN BJT");
+  printLine(0, "NPN-BJT");
+  goToLine(1);
+  clearLine(1);
+  lcd.print("B: ");
   printLine(5, STATUS_RUNNING);
   refreshLCD();
-  float beta1 = measureNPNBJT2(C, B, E);
-  setHigh();
-  float beta2 = measureNPNBJT2(E, B, C);
-  printValue(1, "beta", max(beta1, beta2), "");
+  float beta = getBetaNPN(B, C, E);
+  printValue(4, "beta", beta, "");
+  printLine(5, STATUS_OK);
+  refreshLCD();
+}
+
+void measurePNPBJT(byte B, byte C, byte E) {
+  clearLCD();
+  printLine(0, "PNP-BJT");
+  printLine(5, STATUS_RUNNING);
+  refreshLCD();
+  float beta = getBetaPNP(B, C, E);
+  Serial.println(beta); 
+  printValue(4, "beta", beta, "");
   printLine(5, STATUS_OK);
   refreshLCD();
 }

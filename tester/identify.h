@@ -25,8 +25,10 @@ struct DiodeInfo {
 
 struct BJTInfo {
   PortNum b;
-  PortNum ce1;
-  PortNum ce2;
+  PortNum ce1; // 废弃
+  PortNum ce2; // 废弃
+  PortNum c;
+  PortNum e;
   BJTType type;
 };
 

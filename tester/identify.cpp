@@ -23,6 +23,63 @@ void safeDischarge() {
   delay(100);
 }
 
+static void initPNP(byte B, byte C, byte E) {
+  setPort(B, PortType::BIG, LOW);
+  setPort(C, PortType::SMALL, LOW);
+  setPort(E, PortType::READ, HIGH);
+}
+
+
+static void initNPN(byte B, byte C, byte E) {
+  setPort(B, PortType::BIG, HIGH);
+  setPort(C, PortType::SMALL, HIGH);
+  setPort(E, PortType::READ, LOW);
+}
+
+static float getBetaPNP(byte B, byte C, byte E) {
+  initPNP(B, C, E);
+  float vb = getVoltage(B, 10);
+  float vc = getVoltage(C, 10);
+  float ic = vc / R_SMALL;
+  float ib = vb / R_BIG;
+  float beta = ic / ib;
+  return beta;
+}
+
+static float getBetaNPN(byte B, byte C, byte E) {
+  initNPN(B, C, E);
+  float vb = getVoltage(B, 10);
+  float vc = getVoltage(C, 10);
+  float ic = (VCC - vc) / R_SMALL;
+  float ib = (VCC - vb) / R_BIG;
+  float beta = ic / ib;
+  return beta;
+}
+
+void getPNPBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c, PortNum *e) {
+  float beta1 = getBetaPNP(b, ce1, ce2);
+  float beta2 = getBetaPNP(b, ce2, ce1);
+  if (beta1 > beta2) {
+    *c = ce1;
+    *e = ce2;
+  } else {
+    *c = ce2;
+    *e = ce1;
+  }
+}
+
+void getNPNBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c, PortNum *e) {
+  float beta1 = getBetaNPN(b, ce1, ce2);
+  float beta2 = getBetaNPN(b, ce2, ce1);
+  if (beta1 > beta2) {
+    *c = ce1;
+    *e = ce2;
+  } else {
+    *c = ce2;
+    *e = ce1;
+  }
+}
+
 
 // 返回 port1 -> port2 的导通类型
 // type: 使用什么种类的电阻
@@ -120,6 +177,8 @@ void getTwoPorts(Connectivity (*arr)[3], byte *port1, byte *port2) {
   }
 }
 
+
+
 BJTInfo getBJTInfo(Connectivity (*arr)[3]) {
   BJTInfo info;
   bool findFirst = false;
@@ -138,11 +197,13 @@ BJTInfo getBJTInfo(Connectivity (*arr)[3]) {
             info.ce1 = j0;
             info.ce2 = j;
             info.type = BJTType::NPN;
+            getNPNBJTPorts(info.b, info.ce1, info.ce2, &info.c, &info.e);
           } else {
             info.b = j0;
             info.ce1 = i0;
             info.ce2 = i;
             info.type = BJTType::PNP;
+            getPNPBJTPorts(info.b, info.ce1, info.ce2, &info.c, &info.e);
           }
           return info;
         }
