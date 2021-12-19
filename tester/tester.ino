@@ -43,7 +43,7 @@ void loop() {
       Serial.print(b.ce2);
       Serial.println("");
       // C B E
-      graphNPN(WRITE_3, WRITE_2, WRITE_1, b.ce1, b.b, b.ce2);
+      graphNPN(WRITE_3, WRITE_2, WRITE_1, b.c, b.b, b.e);
     } else {
       measurePNPBJT(b.ce1, b.b, b.ce2);
     }

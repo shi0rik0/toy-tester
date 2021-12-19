@@ -2,11 +2,12 @@
 #include "mygraph.h"
 #include "graphBJT.h"
 #include "measure.h"
+#include "draw.h"
 // 输出曲线上有几个Ib
-const int IB_CNT = 1;
+const int IB_CNT = 2;
 // 一次测试的测试点数量
 const int TEST_CNT = 42;
-const float ibs[IB_CNT] = {20e-6};
+const float ibs[IB_CNT] = {20e-6, 30e-6};
 const float R_B = 1e5;
 const float R_C = 51;
 
@@ -33,9 +34,9 @@ void graphNPN1(dataset points, PinNum pinC, PinNum pinB, PinNum pinE, PortNum po
     for(int i = 0; i < points.len; ++i){
         setVoltage(pinC, Vco);
         //float Uce = getAvgVoltage(portC,1000,10);
-        float Uce = getAvgVoltage(portC,1000,10);
-        float BBB = getAvgVoltage(portB,1000,10);
-        float EEE = getAvgVoltage(portE,1000,10);
+        float EEE = getAvgVoltage(portB,1000,10);
+        float BBB = getAvgVoltage(portC,1000,10);
+        float Uce = getAvgVoltage(portE,1000,10) + 0.1;
         points.x[i] = Uce;  // Uce
         points.y[i] = (Vco - Uce) / R_C; // Ic
 
@@ -55,8 +56,10 @@ void graphNPN1(dataset points, PinNum pinC, PinNum pinB, PinNum pinE, PortNum po
         Serial.print("EEE:");
         Serial.print(EEE);
         Serial.print("\n");
+
+        Serial.print(points.y[i]*1000);
         Vco += VcoStep;
-        delay(5000);
+        delay(5);
     }
 }
 
@@ -72,14 +75,21 @@ void graphNPN(PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum port
     resetPort(portB);
     resetPort(portE);
     float x[TEST_CNT], y[TEST_CNT];
-    const float UceMax = 3.0, IcMax = 0.01; // 画图坐标轴的上限
+    const float UceMax = 5.0, IcMax = 0.015; // 画图坐标轴的上限
+
+    clearLCD();
     for(int i = 0; i < IB_CNT; ++i){
         dataset points(TEST_CNT, x, y);
         graphNPN1(points, pinB, pinC, pinE, portB, portC, portE, ibs[i]);
+        Serial.println("Measure Done");
+        
         drawGraph(x, y, 0, UceMax, 0, IcMax, TEST_CNT);
+        
     }
-
+    
     pinMode(pinB,INPUT);
     pinMode(pinC,INPUT);
     pinMode(pinE,INPUT);
+    delay(60000);
+    clearLCD();
 }

@@ -33,9 +33,20 @@ void testGraph(uint8_t *x, uint8_t *y, int len){ // 画测试图像
   
   lcd.display();
 }*/
-
+void smoothData(float *arr, int len){
+  for(int i = 1; i < len - 1; ++i){
+    if(arr[i] > arr[i-1] && arr[i] > arr[i+1]){
+      arr[i] = (arr[i-1] + arr[i+1]) / 2;
+    }
+    else{
+      arr[i] = (arr[i - 1] + arr[i] + arr[i + 1]) / 3.0;
+    }
+  }
+}
 void drawGraph(float *X, float *Y, float xMin, float xMax, float yMin, float yMax, int len) {  // xMin, xMax分别为x轴最小、最大刻度, y同理; len: 数据点个数
   int px, py; // previous x and y
+  smoothData(X, len);
+  smoothData(Y, len);
   for(int i = 0; i < len; ++i){
     int x = round(__fmap(X[i], xMin, xMax, 0, LCD_WIDTH - 1));
     int y = round(__fmap(Y[i], yMin, yMax , 0, LCD_HEIGHT - 1));
