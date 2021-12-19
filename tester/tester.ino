@@ -2,7 +2,7 @@
 #include "identify.h"
 #include "draw.h"
 #include "measure.h"
-
+#include "graphBJT.h"
 void setup() {
   Serial.begin(9600);
   initLCD();
@@ -16,7 +16,7 @@ void setup() {
 void measure() {
   // 这个地方用 switch 不行，不知道为什么
   ComponentInfo info = getComponentInfo();
-  if (info.type == ComponentType::RESISTOR) {
+  if (info.type == ComponentType::RESISTOR) { 
     ResistorInfo &r = info.info.resistor;
     measureResistor(r.port1, r.port2);
   }
@@ -30,6 +30,13 @@ void measure() {
     BJTInfo &b = info.info.bjt;
     if (b.type == BJTType::NPN) {
       measureNPNBJT(b.ce1, b.b, b.ce2);
+      
+      Serial.print(b.ce1); 
+      Serial.print(b.b);
+      Serial.print(b.ce2);
+      Serial.println("");
+      // C B E
+      graphNPN(WRITE_3, WRITE_2, WRITE_1, b.c, b.b, b.e);
     } else {
       measurePNPBJT(b.ce1, b.b, b.ce2);
     }
