@@ -64,6 +64,8 @@ void drawGraph(float *X, float *Y, float xMin, float xMax, float yMin, float yMa
     }
     
     // 连线
+    //lcd.drawLine(px,py,x,y,BLACK);
+    
     float incl = x == px ? 1e7 : (float)(y - py) / (float)(x - px);
     if(incl <= 1){
       for(int j = 1; px + j < x; ++j){
@@ -75,6 +77,7 @@ void drawGraph(float *X, float *Y, float xMin, float xMax, float yMin, float yMa
         _setPixel(px + round(k / incl), py + k ,BLACK);
       }
     }
+    
     delay(5);
     px = x;
     py = y;

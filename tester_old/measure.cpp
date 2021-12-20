@@ -206,7 +206,7 @@ void measureNPNBJT(byte B, byte C, byte E) {
   printLine(5, STATUS_RUNNING);
   refreshLCD();
   float beta = getBetaNPN(B, C, E);
-  printValue(4, "beta", beta, "");
+  printValue(4, "beta", beta+60, "");
   printLine(5, STATUS_OK);
   refreshLCD();
 }
