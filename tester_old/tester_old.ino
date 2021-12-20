@@ -79,6 +79,9 @@ void loop() {
     if (b == ButtonPressed::SHORT) {
       measure();
     } else if (b == ButtonPressed::LONG) {
+      clearLine(5);
+      printLine(5, "Plotting ...");
+      refreshLCD();
       plot();
     }
   }

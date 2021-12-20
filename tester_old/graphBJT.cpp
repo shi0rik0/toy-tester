@@ -8,9 +8,9 @@ const int IB_CNT = 3;
 // 一次测试的测试点数量
 const int TEST_CNT = 42;
 const float ibs[IB_CNT] = {20e-6, 30e6, 40e-6};
-const char* marks[IB_CNT] = {"20uA","30uA", "40uA"};
-const int mark_Y[IB_CNT] = {32,22,12};
-const float ico[IB_CNT] = {1.0,1.5,2.0};
+const char* marks[IB_CNT] = {"20uA","30uA", "40uA"}; // 画图标注
+const int mark_Y[IB_CNT] = {32,22,12}; // 画图标注的y坐标，这里其实可以自动获取，但是我懒得写了
+
 const float R_B = 1e5;
 const float R_C = 51;
 
@@ -65,15 +65,22 @@ void graphNPN1(dataset points, PinNum pinC, PinNum pinB, PinNum pinE, PortNum po
         delay(5);
     }
 }
+const float ico[IB_CNT] = {1.0,1.5,2.0};
 void drawAxis(){
   //lcd.drawLine(1,1,30,1,BLACK);
   //lcd.drawLine(30,1,30,40,BLACK);
-  for(int i = 0; i < 84; i++){
+  for(int i = 1; i < 84; i++){
     _setPixel(i, 1, BLACK);
   }
+  _setPixel(82,2,BLACK);
+  _setPixel(81,3,BLACK);
   for(int i = 0; i < 48; i++){
     _setPixel(1, i, BLACK);
   }
+  _setPixel(2,46,BLACK);
+  _setPixel(3,45,BLACK);
+  lcd.setCursor(4,44);
+  lcd.print("0");
   lcd.setCursor(8,2);
   lcd.print("Ic");
   lcd.setCursor(64,40);
@@ -92,7 +99,7 @@ void graphNPN(PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum port
     resetPort(portE);
     float x[TEST_CNT], y[TEST_CNT];
     const float UceMin = 0.8, UceMax = 4.0, IcMin = 0.0, IcMax = 0.015; // 画图坐标轴的上限
-
+    
     clearLCD();
     drawAxis();
     for(int i = 0; i < IB_CNT; ++i){
@@ -116,6 +123,6 @@ void graphNPN(PinNum pinC, PinNum pinB, PinNum pinE, PortNum portC, PortNum port
     pinMode(pinB,INPUT);
     pinMode(pinC,INPUT);
     pinMode(pinE,INPUT);
-    delay(10000);
+    delay(5000);
     //clearLCD();
 }
