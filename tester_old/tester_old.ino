@@ -29,10 +29,10 @@ void measure() {
   } else if (info.type == ComponentType::BJT) {
     BJTInfo &b = info.info.bjt;
     if (b.type == BJTType::NPN) {
-      measureNPNBJT(b.b, b.ce1, b.ce2);
+      measureNPNBJT(b.b, b.c, b.e);
 
     } else {
-      measurePNPBJT(b.b, b.ce1, b.ce2);
+      measurePNPBJT(b.b, b.c, b.e);
     }
   } else {
     clearLCD();
