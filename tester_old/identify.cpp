@@ -4,8 +4,8 @@
 void safeDischarge();
 
 enum class Connectivity { OPEN = 0, CAPACITOR, NOT_CAPACITOR };
-Connectivity getConnectivity(PortNum port1, PortNum port2, PortType type, word maxDelay);
-
+Connectivity getConnectivity(PortNum port1, PortNum port2, PortType type,
+                             word maxDelay);
 
 // ---------------私有函数声明结束--------------------
 
@@ -28,7 +28,6 @@ static void initPNP(byte B, byte C, byte E) {
   setPort(C, PortType::SMALL, LOW);
   setPort(E, PortType::READ, HIGH);
 }
-
 
 static void initNPN(byte B, byte C, byte E) {
   setPort(B, PortType::BIG, HIGH);
@@ -56,7 +55,8 @@ static float getBetaNPN(byte B, byte C, byte E) {
   return beta;
 }
 
-void getPNPBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c, PortNum *e) {
+void getPNPBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c,
+                    PortNum *e) {
   float beta1 = getBetaPNP(b, ce1, ce2);
   float beta2 = getBetaPNP(b, ce2, ce1);
   if (beta1 > beta2) {
@@ -68,7 +68,8 @@ void getPNPBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c, PortNum *e)
   }
 }
 
-void getNPNBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c, PortNum *e) {
+void getNPNBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c,
+                    PortNum *e) {
   float beta1 = getBetaNPN(b, ce1, ce2);
   float beta2 = getBetaNPN(b, ce2, ce1);
   if (beta1 > beta2) {
@@ -80,13 +81,13 @@ void getNPNBJTPorts(PortNum b, PortNum ce1, PortNum ce2, PortNum *c, PortNum *e)
   }
 }
 
-
 // 返回 port1 -> port2 的导通类型
 // type: 使用什么种类的电阻
 // maxDelay: 最多等待多久(ms)
-Connectivity getConnectivity(PortNum port1, PortNum port2, PortType type, word maxDelay) {
-  static const float THRESHOLD_LOW = 0.5;
-  static const float THRESHOLD_HIGH = 4.5;
+Connectivity getConnectivity(PortNum port1, PortNum port2, PortType type,
+                             word maxDelay) {
+  static const float THRESHOLD_LOW = 0.1;
+  static const float THRESHOLD_HIGH = 4.9;
   static const float CAPACITOR_THRESHOLD = 0.2;
 
   safeDischarge();
@@ -114,8 +115,8 @@ Connectivity getConnectivity(PortNum port1, PortNum port2, PortType type, word m
   return Connectivity::OPEN;
 }
 
-
-void getAllConnectivities(Connectivity (*arr)[3], PortType type, word maxDelay) {
+void getAllConnectivities(Connectivity (*arr)[3], PortType type,
+                          word maxDelay) {
   for (byte i = 0; i < 3; ++i) {
     for (byte j = 0; j < 3; ++j) {
       if (i != j) {
@@ -139,15 +140,15 @@ CountResult countConnectivites(Connectivity (*arr)[3]) {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       switch (arr[i][j]) {
-        case Connectivity::OPEN:
-          ++r.numOpen;
-          break;
-        case Connectivity::CAPACITOR:
-          ++r.numCapacitor;
-          break;
-        case Connectivity::NOT_CAPACITOR:
-          ++r.numNotCapacitor;
-          break;
+      case Connectivity::OPEN:
+        ++r.numOpen;
+        break;
+      case Connectivity::CAPACITOR:
+        ++r.numCapacitor;
+        break;
+      case Connectivity::NOT_CAPACITOR:
+        ++r.numNotCapacitor;
+        break;
       }
     }
   }
@@ -176,8 +177,6 @@ void getTwoPorts(Connectivity (*arr)[3], byte *port1, byte *port2) {
     }
   }
 }
-
-
 
 BJTInfo getBJTInfo(Connectivity (*arr)[3]) {
   BJTInfo info;
@@ -224,11 +223,11 @@ ComponentType guessType(Connectivity (*arr)[3]) {
     return ComponentType::CAPACITOR;
   } else if (r.numNotCapacitor == 2) {
     if (isSymmetric(arr)) {
-      
+
       Serial.println("RESISTOR");
       return ComponentType::RESISTOR;
     } else {
-      
+
       Serial.println("BJT");
       return ComponentType::BJT;
     }
@@ -244,26 +243,26 @@ ComponentInfo getInfo(Connectivity (*arr)[3], ComponentType type) {
   PortNum port1;
   PortNum port2;
   switch (type) {
-    case ComponentType::RESISTOR:
-      Serial.println("RESISTOR");
-      getTwoPorts(arr, &port1, &port2);
-      r.info.resistor.port1 = port1;
-      r.info.resistor.port2 = port2;
-      break;
-    case ComponentType::CAPACITOR:
-      Serial.println("CAP");
-      getTwoPorts(arr, &port1, &port2);
-      r.info.capacitor.port1 = port1;
-      r.info.capacitor.port2 = port2;
-      break;
-    case ComponentType::DIODE:
-      getTwoPorts(arr, &port1, &port2);
-      r.info.diode.portPos = port1;
-      r.info.diode.portNeg = port2;
-      break;
-    case ComponentType::BJT:
-      r.info.bjt = getBJTInfo(arr);
-      break;
+  case ComponentType::RESISTOR:
+    Serial.println("RESISTOR");
+    getTwoPorts(arr, &port1, &port2);
+    r.info.resistor.port1 = port1;
+    r.info.resistor.port2 = port2;
+    break;
+  case ComponentType::CAPACITOR:
+    Serial.println("CAP");
+    getTwoPorts(arr, &port1, &port2);
+    r.info.capacitor.port1 = port1;
+    r.info.capacitor.port2 = port2;
+    break;
+  case ComponentType::DIODE:
+    getTwoPorts(arr, &port1, &port2);
+    r.info.diode.portPos = port1;
+    r.info.diode.portNeg = port2;
+    break;
+  case ComponentType::BJT:
+    r.info.bjt = getBJTInfo(arr);
+    break;
   }
   return r;
 }

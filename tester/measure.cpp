@@ -76,10 +76,8 @@ void dischargeByBigResistor(byte port1, byte port2, word dischargeTime) {
   delay(dischargeTime);
 }
 
-
-
 //// bBigR=0 B port uses 680 ohm, else 470k ohm.
-//void initPNP(byte B, byte C, byte E, bool bBigR) {
+// void initPNP(byte B, byte C, byte E, bool bBigR) {
 //  if (!bBigR) {
 //    pinMode(PORT[B][SMALL], OUTPUT);
 //    pinMode(PORT[B][BIG], INPUT);
@@ -107,15 +105,13 @@ void initPNP(byte B, byte C, byte E) {
   setPort(E, PortType::READ, HIGH);
 }
 
-
 void initNPN(byte B, byte C, byte E) {
   setPort(B, PortType::BIG, HIGH);
   setPort(C, PortType::SMALL, HIGH);
   setPort(E, PortType::READ, LOW);
 }
 
-
-//float getBetaPNP(byte C, byte B, byte E) {
+// float getBetaPNP(byte C, byte B, byte E) {
 //  lcd.clear();
 //  printType("PNP BJT");
 //  printStatus("Trying as PNP");
@@ -165,8 +161,7 @@ float getBetaNPN(byte B, byte C, byte E) {
   return beta;
 }
 
-
-//void measureNPNBJT(byte B, byte C, byte E) {
+// void measureNPNBJT(byte B, byte C, byte E) {
 //  clearLCD();
 //  printLine(0, "NPN-BJT");
 //  printLine(5, STATUS_RUNNING);
@@ -178,7 +173,7 @@ float getBetaNPN(byte B, byte C, byte E) {
 //  refreshLCD();
 //}
 
-//void measurePNPBJT(byte C, byte B, byte E) {
+// void measurePNPBJT(byte C, byte B, byte E) {
 //  clearLCD();
 //  printLine(0, "PNP-BJT");
 //  printLine(5, STATUS_RUNNING);
@@ -186,17 +181,16 @@ float getBetaNPN(byte B, byte C, byte E) {
 //  float beta1 = getBetaPNP(B, C, E);
 //  float beta2 = getBetaPNP(B, E, C);
 //  Serial.println(beta1);
-//  Serial.println(beta2); 
+//  Serial.println(beta2);
 //  printValue(1, "beta", max(beta1, beta2), "");
 //  printLine(5, STATUS_OK);
 //  refreshLCD();
 //}
 
 const char *getPortAlphabet(PortNum p) {
-  static const char* const STR[] = {"X", "Y", "Z"};
+  static const char *const STR[] = {"X", "Y", "Z"};
   return STR[p];
 }
-
 
 void measureNPNBJT(byte B, byte C, byte E) {
   clearLCD();
@@ -239,15 +233,14 @@ void measurePNPBJT(byte B, byte C, byte E) {
   printLine(5, STATUS_RUNNING);
   refreshLCD();
   float beta = getBetaPNP(B, C, E);
-  Serial.println(beta); 
+  Serial.println(beta);
   printValue(4, "beta", beta, "");
   printLine(5, STATUS_OK);
   refreshLCD();
 }
 
-
 //// 返回值：true: 电压下降值可观; false: 电压基本不变
-//bool recordVoltages(float *vArr, byte port1, int cnt, int interval) {
+// bool recordVoltages(float *vArr, byte port1, int cnt, int interval) {
 //  float THRESH = 0.5;
 //  for (int i = 0; i < cnt; ++i) {
 //    vArr[i] = getVoltage(port1, 1);
@@ -257,7 +250,7 @@ void measurePNPBJT(byte B, byte C, byte E) {
 //  return (vArr[0] - vArr[cnt - 1] > THRESH);
 //}
 //
-//float getTao(float *vArr, int pointCnt, int interval) {
+// float getTao(float *vArr, int pointCnt, int interval) {
 //  const float THRESH = 0.1; // 电压为0的阈值
 //  float tao = -1;
 //  float sumTao = 0;
@@ -277,7 +270,7 @@ void measurePNPBJT(byte B, byte C, byte E) {
 //  return sumTao / (float)(validCnt);
 //}
 //
-//float getCapacitance(byte port1, byte port2, float r0) {
+// float getCapacitance(byte port1, byte port2, float r0) {
 //  static float vArr[ARRAY_LEN];
 //  int pointCnt = 50;  // 取点数目
 //  int interval = 10; // 测量间隔(us)
@@ -289,11 +282,9 @@ void measurePNPBJT(byte B, byte C, byte E) {
 //  return tao / r0; // tao = RC
 //}
 
-
-
 //
 //// 这个函数丑了点，一会儿再改
-//float getCapacitance2(byte port1, byte port2) {
+// float getCapacitance2(byte port1, byte port2) {
 //
 //  const word dischargeTime = 10; // 单位ms. 这个时间怎么确定的？
 //  //  printType("Capacitor");
@@ -311,13 +302,12 @@ void measurePNPBJT(byte B, byte C, byte E) {
 //    switchToSmallResistor(port1, port2); // 开始充电
 //    dischargeByBigResistor(port1, port2, dischargeTime);
 //    switchToBigResistor(port1, port2); // 开始充电
-//  
+//
 //    cap = getCapacitance(port1, port2, R_SMALL);
 //    dischargeBySmallResistor(port1, port2, dischargeTime); //  电容放电
 //  }
 //  return cap;
 //}
-
 
 float getCapacitance2(byte port1, byte port2) {
   static const float THRESHOLD_1 = 2.0;
@@ -325,42 +315,42 @@ float getCapacitance2(byte port1, byte port2) {
   resetPort(port2);
   setPort(port1, PortType::BIG, HIGH);
   setPort(port2, PortType::READ, LOW);
-//  float v1;
-//  unsigned long time1;
-//  float v2 = getVoltage(port1);
-//  unsigned long time2 = micros();
-//  do {
-//    v1 = v2;
-//    time1 = time2;
-//    v2 = getVoltage(port1);
-//    time2 = micros();
-//    Serial.println(time2);
-//    Serial.println(v2);
-//  } while (v2 < THRESHOLD);
+  //  float v1;
+  //  unsigned long time1;
+  //  float v2 = getVoltage(port1);
+  //  unsigned long time2 = micros();
+  //  do {
+  //    v1 = v2;
+  //    time1 = time2;
+  //    v2 = getVoltage(port1);
+  //    time2 = micros();
+  //    Serial.println(time2);
+  //    Serial.println(v2);
+  //  } while (v2 < THRESHOLD);
 
-//  bool v1_recorded = false;
-//  float v1, v2;
-//  unsigned long time1, time2;
-//  for (;;) {
-//    float v = getVoltage(port1);
-//    if (v > THRESHOLD_2) {
-//      v2 = v;
-//      time2 = micros();
-//      break;
-//    } else if (!v1_recorded && v > THRESHOLD_1) {
-//      v1 = v;
-//      time1 = micros();
-//      v1_recorded = true;
-//    }
-//  }
-//      Serial.println(time1);
-//    Serial.println(v1);
-//    Serial.println(time2);
-//    Serial.println(v2);
-//  float tao = (time2 - time1) * 1e-6 / log(v2 / v1);
-//  float cap = tao / R_BIG;
-//  Serial.println(cap * 1e9);
-//  return cap;
+  //  bool v1_recorded = false;
+  //  float v1, v2;
+  //  unsigned long time1, time2;
+  //  for (;;) {
+  //    float v = getVoltage(port1);
+  //    if (v > THRESHOLD_2) {
+  //      v2 = v;
+  //      time2 = micros();
+  //      break;
+  //    } else if (!v1_recorded && v > THRESHOLD_1) {
+  //      v1 = v;
+  //      time1 = micros();
+  //      v1_recorded = true;
+  //    }
+  //  }
+  //      Serial.println(time1);
+  //    Serial.println(v1);
+  //    Serial.println(time2);
+  //    Serial.println(v2);
+  //  float tao = (time2 - time1) * 1e-6 / log(v2 / v1);
+  //  float cap = tao / R_BIG;
+  //  Serial.println(cap * 1e9);
+  //  return cap;
 
   int count = 0;
   for (;;) {
@@ -378,7 +368,7 @@ float getCapacitance2(byte port1, byte port2) {
 
 void measureDiode(byte portPos, byte portNeg) {
   clearLCD();
-  printLine(0, "Capacitor");
+  printLine(0, "Diode");
   printLine(5, STATUS_RUNNING);
   refreshLCD();
   setPort(portPos, PortType::BIG, HIGH);
@@ -396,7 +386,6 @@ void measureDiode(byte portPos, byte portNeg) {
   printValue(3, "Vf", v, "V");
   printLine(5, STATUS_OK);
   refreshLCD();
-  
 }
 
 void measureCapacitor(byte port1, byte port2) {
